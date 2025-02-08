@@ -18,6 +18,7 @@ import frc.robot.constants.ElevConstants;
 public class ElevSubsystem extends SubsystemBase {
 
     public enum Level {
+        HOME,
         LVL1,
         LVL2,
         LVL3,
@@ -41,11 +42,12 @@ public class ElevSubsystem extends SubsystemBase {
         SmartDashboard.putNumber(ElevConstants.overrideTicksName, 0);
 
         targetOverrideLvl = new SendableChooser<>();
+        targetOverrideLvl.addOption("Home", Level.HOME);
         targetOverrideLvl.addOption("Level 1", Level.LVL1);
         targetOverrideLvl.addOption("Level 2", Level.LVL2);
         targetOverrideLvl.addOption("Level 3", Level.LVL3);
         targetOverrideLvl.addOption("Level 4", Level.LVL4);
-        targetOverrideLvl.setDefaultOption("Level 1", Level.LVL1);
+        targetOverrideLvl.setDefaultOption("Home", Level.HOME);
         SmartDashboard.putData(ElevConstants.overrideLVLName, targetOverrideLvl);
     }
 
@@ -79,6 +81,10 @@ public class ElevSubsystem extends SubsystemBase {
         double val;
 
         switch(lvl) {
+            case HOME:
+            val = ElevConstants.homeInches;
+            break;
+
             case LVL1:
             val = ElevConstants.lvl1Inches;
             break;
@@ -153,7 +159,9 @@ public class ElevSubsystem extends SubsystemBase {
         isAtTarget = false; //to prevent a single frame where the target has been changed but the boolean hasnt been updated
     }
     private Level getCurrentLevel(double inches) {
-        if(Math.abs(inches - ElevConstants.lvl1Inches) <= ElevConstants.targetThresholdInches)
+        if(Math.abs(inches - ElevConstants.homeInches) <= ElevConstants.targetThresholdInches)
+            return Level.HOME;
+        else if(Math.abs(inches - ElevConstants.lvl1Inches) <= ElevConstants.targetThresholdInches)
             return Level.LVL1;
         else if(Math.abs(inches - ElevConstants.lvl2Inches) <= ElevConstants.targetThresholdInches)
             return Level.LVL2;
