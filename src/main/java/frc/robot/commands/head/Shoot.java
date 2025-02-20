@@ -30,6 +30,5 @@ public class Shoot extends Command {
     @Override
     public boolean isFinished() {
         return timeout.hasElapsed(HeadConstants.shootTime);
-    }
-        
+    }       
 }

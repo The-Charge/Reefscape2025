@@ -6,7 +6,6 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionDutyCycle;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
-import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -23,6 +22,8 @@ public class ElevSubsystem extends SubsystemBase {
         LVL2,
         LVL3,
         LVL4,
+        ALGAE_LOW,
+        ALGAE_HIGH,
         UNKNOWN
     }
     
@@ -47,6 +48,8 @@ public class ElevSubsystem extends SubsystemBase {
         targetOverrideLvl.addOption("Level 2", Level.LVL2);
         targetOverrideLvl.addOption("Level 3", Level.LVL3);
         targetOverrideLvl.addOption("Level 4", Level.LVL4);
+        targetOverrideLvl.addOption("Algae Low", Level.ALGAE_LOW);
+        targetOverrideLvl.addOption("Algae High", Level.ALGAE_HIGH);
         targetOverrideLvl.setDefaultOption("Home", Level.HOME);
         SmartDashboard.putData(ElevConstants.overrideLVLName, targetOverrideLvl);
     }
@@ -67,7 +70,7 @@ public class ElevSubsystem extends SubsystemBase {
     }
 
     public void setTargetPositionInches(double inches) {
-        setTargetPositionTicks(inches * ElevConstants.tickToInConversion);
+        setTargetPositionTicks(inches / ElevConstants.tickToInConversion);
     }
     public void setTargetPositionTicks(double ticks) {
         targetTicks = MathUtil.clamp(ticks, ElevConstants.minPosTicks, ElevConstants.maxPosTicks);
@@ -99,6 +102,14 @@ public class ElevSubsystem extends SubsystemBase {
 
             case LVL4:
             val = ElevConstants.lvl4Inches;
+            break;
+
+            case ALGAE_LOW:
+            val = ElevConstants.algaeLowInches;
+            break;
+
+            case ALGAE_HIGH:
+            val = ElevConstants.algaeHighInches;
             break;
 
             case UNKNOWN:
@@ -133,7 +144,8 @@ public class ElevSubsystem extends SubsystemBase {
         TalonFXConfiguration motorConfig = new TalonFXConfiguration();
         motorConfig.MotorOutput.PeakForwardDutyCycle = ElevConstants.maxVBus;
         motorConfig.MotorOutput.PeakReverseDutyCycle = -ElevConstants.maxVBus;
-        motorConfig.MotorOutput.withNeutralMode(NeutralModeValue.Brake);
+        motorConfig.MotorOutput.withNeutralMode(ElevConstants.neutralMode);
+        motorConfig.MotorOutput.Inverted = ElevConstants.inverted;
         
         motorConfig.CurrentLimits.StatorCurrentLimit = ElevConstants.maxCurrent;
         motorConfig.CurrentLimits.StatorCurrentLimitEnable = true;
@@ -145,6 +157,12 @@ public class ElevSubsystem extends SubsystemBase {
         slotConfigs.kD = ElevConstants.pidf.d;
         slotConfigs.kG = ElevConstants.pidf.f;
         slotConfigs.GravityType = GravityTypeValue.Elevator_Static;
+
+        // conservative motionmagic configs
+        var motionMagicConfigs = motorConfig.MotionMagic;
+        motionMagicConfigs.MotionMagicCruiseVelocity = 20; // Target cruise velocity of 80 rps
+        motionMagicConfigs.MotionMagicAcceleration = 80; // Target acceleration of 80 rps/s (1 second)
+        motionMagicConfigs.MotionMagicJerk = 800; // Target jerk of 800 rps/s/s (0.2 seconds)
         
         m.getConfigurator().apply(motorConfig);
         
@@ -169,6 +187,10 @@ public class ElevSubsystem extends SubsystemBase {
             return Level.LVL3;
         else if(Math.abs(inches - ElevConstants.lvl4Inches) <= ElevConstants.targetThresholdInches)
             return Level.LVL4;
+        else if(Math.abs(inches - ElevConstants.algaeLowInches) <= ElevConstants.targetThresholdInches)
+            return Level.ALGAE_LOW;
+        else if(Math.abs(inches - ElevConstants.algaeHighInches) <= ElevConstants.targetThresholdInches)
+            return Level.ALGAE_HIGH;
         
         return Level.UNKNOWN;
     }

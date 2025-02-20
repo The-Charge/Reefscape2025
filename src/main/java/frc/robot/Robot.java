@@ -30,7 +30,7 @@ public class Robot extends TimedRobot {
     private PowerDistribution m_pdp = new PowerDistribution();
 
     public Robot() {
-        instance = this;
+        instance = this; 
     }
     
     public static Robot getInstance()

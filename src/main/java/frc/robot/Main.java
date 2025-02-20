@@ -8,7 +8,6 @@ import java.io.IOException;
 
 import org.json.simple.parser.ParseException;
 
-import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.util.FileVersionException;
 
 import edu.wpi.first.wpilibj.RobotBase;
