@@ -19,15 +19,14 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import frc.robot.commands.intake.Intake;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.commands.swervedrive.drivebase.TeleopDrive;
 import frc.robot.constants.SwerveConstants;
-import frc.robot.subsystems.ElevSubsystem;
-import frc.robot.subsystems.HeadSubsystem;
-import frc.robot.subsystems.IntakeSubsystem;
+import frc.robot.subsystems.LEDSubsystem;
 import frc.robot.subsystems.SwerveSubsystem;
-import frc.robot.subsystems.VisionSubsystem;
+import frc.robot.subsystems.TestSubsystem;
 
 /**
 * This class is where the bulk of the robot should be declared. Since Command-based is a "declarative" paradigm, very
@@ -40,12 +39,13 @@ public class RobotContainer {
     private final Joystick buttonBox = new Joystick(1);
 
     private final SwerveSubsystem swerve = new SwerveSubsystem(new File(Filesystem.getDeployDirectory(), "swerve"));
-    private final VisionSubsystem m_limelight = new VisionSubsystem(swerve);
+    // private final VisionSubsystem m_limelight = new VisionSubsystem(swerve);
     // private final ElevSubsystem elev = new ElevSubsystem();
     // private final ClimbSubsystem climb = new ClimbSubsystem();
     // private final HeadSubsystem head = new HeadSubsystem();
     // private final IntakeSubsystem intake = new IntakeSubsystem();
-    
+    private final TestSubsystem test = new TestSubsystem();
+    private final LEDSubsystem LEDs = new LEDSubsystem();
     private SendableChooser<Command> autoChooser;
     
     public RobotContainer() {
@@ -81,6 +81,15 @@ public class RobotContainer {
     private void configureBindings() {
         driverXbox.b().onTrue(Commands.runOnce(swerve::zeroGyro));
         driverXbox.x().whileTrue(Commands.runOnce(swerve::lock, swerve).repeatedly());
+   new Trigger(() -> buttonBox.getRawButton(1)).onTrue(new InstantCommand(() -> {
+        test.set();
+        LEDs.LEDs();
+   }));
+   new Trigger(() -> buttonBox.getRawButton(2)).onTrue(new InstantCommand(()->{
+    test.stop();
+    LEDs.Stop();
+   }));
+   
 
         // new Trigger(() -> buttonBox.getRawButton(1)).onTrue(new InstantCommand(elev::stop));
         // new Trigger(() -> buttonBox.getRawButton(2)).onTrue(new MoveToInches(elev, 0));
