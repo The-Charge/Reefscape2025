@@ -82,7 +82,7 @@ public class RobotContainer {
         driverXbox.b().onTrue(Commands.runOnce(swerve::zeroGyro));
         driverXbox.x().whileTrue(Commands.runOnce(swerve::lock, swerve).repeatedly());
    new Trigger(() -> buttonBox.getRawButton(1)).onTrue(new InstantCommand(() -> {
-        test.set();
+        test.set(buttonBox.getRawAxis(0) * 100);
         LEDs.LEDs();
    }));
    new Trigger(() -> buttonBox.getRawButton(2)).onTrue(new InstantCommand(()->{
