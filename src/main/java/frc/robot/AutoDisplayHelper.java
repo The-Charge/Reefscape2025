@@ -19,7 +19,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 
 public abstract class AutoDisplayHelper {
 
-    public static void displayAutoPath(Command autoCommand) {
+    public static void displayAutoPath(Command autoCommand, boolean isRedAlliance) {
 
         //The name is "InstantCommand" when Command.none() is passed
         if(autoCommand == null || autoCommand.getName().equals("InstantCommand")) {
@@ -39,6 +39,9 @@ public abstract class AutoDisplayHelper {
         //generate each trajectory and merge them into one
         Trajectory mergedTraj = null;
         for(PathPlannerPath path : paths) {
+            if(isRedAlliance)
+                path = path.flipPath();
+
             List<Pose2d> poses = getPosesFromPath(path);
             Trajectory traj = generateTrajectory(poses);
 
@@ -81,25 +84,31 @@ public abstract class AutoDisplayHelper {
         double rad = Math.atan2(next.position.getY() - current.position.getY(), next.position.getX() - current.position.getX());
         return new Rotation2d(rad);
     }
+
     private static List<Pose2d> getPosesFromPath(PathPlannerPath path) {
         List<PathPoint> pathPoints = path.getAllPathPoints();
         List<Pose2d> poses = new ArrayList<>();
 
-        for(int i = 0; i < pathPoints.size(); i++) {
+        for (int i = 0; i < pathPoints.size(); i++) {
             PathPoint pp = pathPoints.get(i);
 
             Rotation2d rot;
-            if(pp.rotationTarget != null) //if the point already has a rotation then use it
-                rot = pp.rotationTarget.rotation();
-            else if(i == pathPoints.size() - 1) //edge case for if the last point doesnt have a rotation then use a default of 0
-                rot = new Rotation2d();
-            else //calculate the angle from the current point to the next
-                rot = calculatePoseRotation(pp, pathPoints.get(i + 1));
+            if(i == 0) {
+                if(pathPoints.size() > 1)
+                    rot = calculatePoseRotation(pp, pathPoints.get(i + 1)); //For the first point, use the heading towards the second point
+                else
+                    rot = new Rotation2d(); //If there's only one point, use a default rotation
+            }
+            else if(i == pathPoints.size() - 1)
+                rot = calculatePoseRotation(pathPoints.get(i - 1), pp); //For the last point, use the heading from the second-to-last point
+            else {
+                // For intermediate points, calculate the heading as the average of the direction to the next and previous points
+                Rotation2d toNext = calculatePoseRotation(pp, pathPoints.get(i + 1));
+                Rotation2d fromPrev = calculatePoseRotation(pathPoints.get(i - 1), pp);
+                rot = new Rotation2d((toNext.getRadians() + fromPrev.getRadians()) / 2.0);
+            }
 
-            poses.add(new Pose2d(
-                pp.position,
-                rot
-            ));
+            poses.add(new Pose2d(pp.position, rot));
         }
 
         return poses;

@@ -30,7 +30,7 @@ public class Robot extends TimedRobot {
     private PowerDistribution m_pdp = new PowerDistribution();
 
     public Robot() {
-        instance = this;
+        instance = this; 
     }
     
     public static Robot getInstance()
@@ -107,6 +107,7 @@ public class Robot extends TimedRobot {
     @Override
     public void autonomousInit()
     {
+        m_robotContainer.clearTeleopDefaultCommand();
         m_robotContainer.setMotorBrake(true);
         m_autonomousCommand = m_robotContainer.getAutonomousCommand();
         
@@ -115,6 +116,8 @@ public class Robot extends TimedRobot {
         {
             m_autonomousCommand.schedule();
         }
+
+        m_robotContainer.displayAuto();
     }
     
     /**
@@ -140,6 +143,8 @@ public class Robot extends TimedRobot {
             CommandScheduler.getInstance().cancelAll();
         }
         
+        m_robotContainer.setTeleopDefaultCommand();
+        m_robotContainer.setMotorBrake(true);
         AutoDisplayHelper.clearAutoPath();
     }
     
