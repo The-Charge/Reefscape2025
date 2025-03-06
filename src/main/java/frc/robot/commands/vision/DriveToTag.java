@@ -77,7 +77,7 @@ public class DriveToTag extends Command {
       rot2d = rot2d.minus(Rotation2d.k180deg);
     }
 
-    PathConstraints constraints = new PathConstraints(SwerveConstants.MAX_SPEED, 1.0, 2 * Math.PI, 4 * Math.PI);
+    PathConstraints constraints = new PathConstraints(SwerveConstants.MAX_SPEED, 4.0, 2 * Math.PI, 4 * Math.PI);
 
     // Create the path using the waypoints created above
     PathPlannerPath path = new PathPlannerPath(waypoints, constraints, null, new GoalEndState(0.0, rot2d));
