@@ -13,6 +13,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.AutoDisplayHelper;
 import frc.robot.constants.SwerveConstants;
 import frc.robot.constants.TelemetryConstants;
 import frc.robot.constants.VisionConstants.ApriltagConstants;
@@ -97,6 +98,7 @@ public class DriveToTag extends Command {
       SmartDashboard.putNumber("swerve y", swerve.getPose().getY());
     }
     // run the path
+    AutoDisplayHelper.displayTelePath(path);
     drivetoPose = AutoBuilder.followPath(path).withInterruptBehavior(InterruptionBehavior.kCancelSelf);
     drivetoPose.schedule();
   }
@@ -110,6 +112,7 @@ public class DriveToTag extends Command {
 
   @Override
   public boolean isFinished() {
+    if (drivetoPose == null) return false;
     return drivetoPose.isFinished();
   }
 

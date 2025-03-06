@@ -131,7 +131,7 @@ public class RobotContainer {
         driver1.leftBumper().whileTrue(setupDtt(ReefPosition.LEFT, true));
         driver1.y().whileTrue(setupDtt(ReefPosition.MIDDLE, false));
         
-        new Trigger(() -> ((MathUtil.applyDeadband(Math.abs(driver1.getLeftX()), SwerveConstants.LEFT_X_DEADBAND) > 0 || MathUtil.applyDeadband(Math.abs(driver1.getLeftY()), SwerveConstants.LEFT_Y_DEADBAND) > 0.1) && dtt != null)).onTrue(new InstantCommand() {@Override public void execute(){if (dtt.getDriveToPose() != null)dtt.getDriveToPose().end(true);}});
+        new Trigger(() -> ((MathUtil.applyDeadband(Math.abs(driver1.getLeftX()), SwerveConstants.LEFT_X_DEADBAND) > 0 || MathUtil.applyDeadband(Math.abs(driver1.getLeftY()), SwerveConstants.LEFT_Y_DEADBAND) > 0.1) && dtt != null)).onTrue(new InstantCommand() {@Override public void execute(){if (dtt.getDriveToPose() != null){dtt.getDriveToPose().end(true);AutoDisplayHelper.clearAutoPath();}}});
         
         driver1.a().whileTrue(new DriveToAlgae(swerve, reeflimelight));
         
@@ -217,7 +217,7 @@ public class RobotContainer {
 
         // if(TelemetryConstants.algaeManipLevel >= TelemetryConstants.HIGH) {
         //     SmartDashboard.putData("AlgaeManip Out", new AlgaeManipDeploy(algaeManip));
-        //     SmartDashboard.putData("AlgaeManip In", new AlgaeManipRetract(algaeManip));
+        //     SmartDashboard.putData("AlgaeManip In", new AlgaeManip`Retract(algaeManip));
         //     SmartDashboard.putData("AlgaeManip Intake", new AlgaeManipSpin(algaeManip, true));
         //     SmartDashboard.putData("AlgaeManip Outtake", new AlgaeManipSpin(algaeManip, false));
         // }

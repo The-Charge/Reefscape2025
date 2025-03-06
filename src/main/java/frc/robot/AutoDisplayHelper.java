@@ -9,6 +9,7 @@ import com.pathplanner.lib.path.PathPoint;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
@@ -67,7 +68,21 @@ public abstract class AutoDisplayHelper {
         SmartDashboard.putData("Field", field);
         field.getObject("traj").setTrajectory(mergedTraj);
     }
+    public static void displayTelePath(PathPlannerPath path) {
+        if (path == null) {clearAutoPath(); return;}
+        Field2d field = new Field2d();
+        
+        List<Pose2d> poses = getPosesFromPath(path);
+        if (poses == null) return;
+        if (poses.size() < 2) return;
+        System.out.println("attempting to add traj");
+        Trajectory traj = generateTrajectory(poses);
+        if (traj == null) {clearAutoPath(); return;}
+        SmartDashboard.putData("Field", field);
+        field.getObject("traj").setTrajectory(traj);
+    }
     public static void clearAutoPath() {
+        System.out.println("clear path");
         Field2d field = new Field2d();
 
         SmartDashboard.putData("Field", field);
@@ -76,7 +91,8 @@ public abstract class AutoDisplayHelper {
 
     private static Trajectory generateTrajectory(List<Pose2d> poses) {
         TrajectoryConfig trajConfig = new TrajectoryConfig(3, 3); //values don't matter as long as they aren't zero
-
+        if (poses == null) return null;
+        if (poses.size() < 2) return null;
         return TrajectoryGenerator.generateTrajectory(poses, trajConfig);
     }
     private static Rotation2d calculatePoseRotation(PathPoint current, PathPoint next) {
@@ -86,20 +102,19 @@ public abstract class AutoDisplayHelper {
     }
 
     private static List<Pose2d> getPosesFromPath(PathPlannerPath path) {
-        List<PathPoint> pathPoints = path.getAllPathPoints();
+        List<PathPoint> pathPoints = new ArrayList<>(path.getAllPathPoints());
         List<Pose2d> poses = new ArrayList<>();
-
+        Translation2d pose = new Translation2d();
         for (int i = 0; i < pathPoints.size(); i++) {
             PathPoint pp = pathPoints.get(i);
-
+            pose = pp.position;
             Rotation2d rot;
             if(i == 0) {
                 if(pathPoints.size() > 1)
                     rot = calculatePoseRotation(pp, pathPoints.get(i + 1)); //For the first point, use the heading towards the second point
                 else
                     rot = new Rotation2d(); //If there's only one point, use a default rotation
-            }
-            else if(i == pathPoints.size() - 1)
+            } else if(i == pathPoints.size() - 1)
                 rot = calculatePoseRotation(pathPoints.get(i - 1), pp); //For the last point, use the heading from the second-to-last point
             else {
                 // For intermediate points, calculate the heading as the average of the direction to the next and previous points
@@ -107,8 +122,13 @@ public abstract class AutoDisplayHelper {
                 Rotation2d fromPrev = calculatePoseRotation(pathPoints.get(i - 1), pp);
                 rot = new Rotation2d((toNext.getRadians() + fromPrev.getRadians()) / 2.0);
             }
-
-            poses.add(new Pose2d(pp.position, rot));
+            if (i > 0 && pose.getX() == poses.get(i-1).getX() && pose.getY() == poses.get(i-1).getY()) {
+                System.out.println("same point :(");
+                poses.remove(i-1);
+                pathPoints.remove(i);
+                poses.add(new Pose2d(pose, rot));
+                i--;
+            } else poses.add(new Pose2d(pose, rot));
         }
 
         return poses;
