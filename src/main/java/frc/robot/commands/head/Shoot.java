@@ -21,13 +21,8 @@ public class Shoot extends Command {
     @Override
     public void initialize() {
         timeout = new Timer(); 
-
-        if(elev.getPositionLevel() == ElevSubsystem.Level.LVL1) {
-            head.flywheelLeft(HeadConstants.shootVBus / 2);
-        }
-        else {
-            head.flywheelLeft(HeadConstants.shootVBus);
-        }
+        
+        head.flywheelLeft(HeadConstants.shootVBus);
         head.flywheelRight(HeadConstants.shootVBus);
     }
     @Override

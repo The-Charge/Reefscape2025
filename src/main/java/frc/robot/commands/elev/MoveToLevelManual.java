@@ -5,7 +5,7 @@ import frc.robot.subsystems.ElevSubsystem;
 
 public class MoveToLevelManual extends Command {
     
-    private ElevSubsystem elev;
+    private final ElevSubsystem elev;
 
     public MoveToLevelManual(ElevSubsystem elevSub) {
         elev = elevSub;
@@ -13,7 +13,7 @@ public class MoveToLevelManual extends Command {
 
     @Override
     public void initialize() {
-        new MoveToLevel(elev, elev.getOverrideLevel(), false).schedule();
+        elev.setTargetPositionLevel(elev.getOverrideLevel());
     }
 
     @Override

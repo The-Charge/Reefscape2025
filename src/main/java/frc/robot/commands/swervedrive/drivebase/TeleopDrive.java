@@ -72,7 +72,7 @@ public class TeleopDrive extends Command {
             mode = Mode.REEF;
         } else if(!povCenter.getAsBoolean()) {
             mode = Mode.POV;
-        } else if (heading.getAsDouble() >= SwerveConstants.RIGHT_X_DEADBAND) {
+        } else if (Math.abs(heading.getAsDouble()) >= SwerveConstants.RIGHT_X_DEADBAND) {
             mode = Mode.JOYSTICK;
         }
 

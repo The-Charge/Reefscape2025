@@ -65,25 +65,19 @@ public class DriveToTag extends Command {
     rot = rot2d.getRadians();
 
     
-    x = ApriltagConstants.TAG_POSES[tagid].getX() + (Units.inchesToMeters(15))*Math.cos(rot) - (ApriltagConstants.CENTER_TO_SCORER_OFFSET + offset)*Math.sin(rot);
-    y = ApriltagConstants.TAG_POSES[tagid].getY() + (Units.inchesToMeters(15))*Math.sin(rot) + (ApriltagConstants.CENTER_TO_SCORER_OFFSET + offset)*Math.cos(rot); 
+    x = ApriltagConstants.TAG_POSES[tagid].getX() + (Units.inchesToMeters(16))*Math.cos(rot) - (ApriltagConstants.CENTER_TO_SCORER_OFFSET + offset)*Math.sin(rot);
+    y = ApriltagConstants.TAG_POSES[tagid].getY() + (Units.inchesToMeters(16))*Math.sin(rot) + (ApriltagConstants.CENTER_TO_SCORER_OFFSET + offset)*Math.cos(rot); 
     
+    List<Waypoint> waypoints = PathPlannerPath.waypointsFromPoses(
+      new Pose2d(swerve.getPose().getTranslation(), new Rotation2d(x-swerve.getPose().getX(), y-swerve.getPose().getY())),
+      new Pose2d(x, y, rot2d.minus(Rotation2d.k180deg))
+    );
+
     if (!(tagid == 1 || tagid == 2 || tagid == 12 || tagid == 13)) {
       rot2d = rot2d.minus(Rotation2d.k180deg);
     }
-    
-    SmartDashboard.putNumber("rotation", rot);
-    SmartDashboard.putNumber("x vert", 15*Math.cos(rot));
-    SmartDashboard.putNumber("y vert", 15*Math.sin(rot));
-    SmartDashboard.putNumber("x horiz", -15*Math.sin(rot));
-    SmartDashboard.putNumber("y horiz", 15*Math.cos(rot));
 
-    List<Waypoint> waypoints = PathPlannerPath.waypointsFromPoses(
-      swerve.getPose(),
-      new Pose2d(x, y, rot2d)
-    );
-
-    PathConstraints constraints = new PathConstraints(SwerveConstants.MAX_SPEED, 3.0, 2 * Math.PI, 4 * Math.PI);
+    PathConstraints constraints = new PathConstraints(SwerveConstants.MAX_SPEED, 1.0, 2 * Math.PI, 4 * Math.PI);
 
     // Create the path using the waypoints created above
     PathPlannerPath path = new PathPlannerPath(waypoints, constraints, null, new GoalEndState(0.0, rot2d));
