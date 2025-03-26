@@ -6,6 +6,7 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.PositionDutyCycle;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.GravityTypeValue;
+import com.ctre.phoenix6.signals.ReverseLimitValue;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -13,6 +14,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.constants.ElevConstants;
+import frc.robot.constants.TelemetryConstants;
 
 public class ElevSubsystem extends SubsystemBase {
 
@@ -32,41 +34,61 @@ public class ElevSubsystem extends SubsystemBase {
     private int targetCounter = 0;
     private boolean isAtTarget = true;
     private SendableChooser<Level> targetOverrideLvl;
+    private boolean hardStopLast = true;
 
     public ElevSubsystem() {
         motor = new TalonFX(ElevConstants.motorID);
 
         configureMotor(motor);
 
-        //used for smartdashboard override commands, read only
-        SmartDashboard.putNumber(ElevConstants.overrideInName, 0);
-        SmartDashboard.putNumber(ElevConstants.overrideTicksName, 0);
+        if(TelemetryConstants.debugTelemetry) {
+            //used for smartdashboard override commands, read only
+            SmartDashboard.putNumber(ElevConstants.overrideInName, 0);
+            SmartDashboard.putNumber(ElevConstants.overrideTicksName, 0);
 
-        targetOverrideLvl = new SendableChooser<>();
-        targetOverrideLvl.addOption("Home", Level.HOME);
-        targetOverrideLvl.addOption("Level 1", Level.LVL1);
-        targetOverrideLvl.addOption("Level 2", Level.LVL2);
-        targetOverrideLvl.addOption("Level 3", Level.LVL3);
-        targetOverrideLvl.addOption("Level 4", Level.LVL4);
-        targetOverrideLvl.addOption("Algae Low", Level.ALGAE_LOW);
-        targetOverrideLvl.addOption("Algae High", Level.ALGAE_HIGH);
-        targetOverrideLvl.setDefaultOption("Home", Level.HOME);
-        SmartDashboard.putData(ElevConstants.overrideLVLName, targetOverrideLvl);
+            targetOverrideLvl = new SendableChooser<>();
+            targetOverrideLvl.addOption("Home", Level.HOME);
+            targetOverrideLvl.addOption("Level 1", Level.LVL1);
+            targetOverrideLvl.addOption("Level 2", Level.LVL2);
+            targetOverrideLvl.addOption("Level 3", Level.LVL3);
+            targetOverrideLvl.addOption("Level 4", Level.LVL4);
+            targetOverrideLvl.addOption("Algae Low", Level.ALGAE_LOW);
+            targetOverrideLvl.addOption("Algae High", Level.ALGAE_HIGH);
+            targetOverrideLvl.setDefaultOption("Home", Level.HOME);
+            SmartDashboard.putData(ElevConstants.overrideLVLName, targetOverrideLvl);
+        }
     }
 
     @Override
     public void periodic() {
+        if(ElevConstants.hardStopResetsEncoder)
+            checkHardStop();
+        
         targetCheck();
 
+        if(getCurrentCommand() == null)
+            SmartDashboard.putString("Elev RunningCommand", "None");
+        else
+            SmartDashboard.putString("Elev RunningCommand", getCurrentCommand().getName());
+        
         SmartDashboard.putNumber("Elev Pos (In)", getPositionInches());
-        SmartDashboard.putNumber("Elev Pos (Ticks)", getPositionTicks());
-        SmartDashboard.putString("Elev Pos (LVL)", getPositionLevel().name());
-        SmartDashboard.putNumber("Elev Err (In)", (targetTicks - getPositionTicks()) * ElevConstants.tickToInConversion);
-        SmartDashboard.putNumber("Elev Err (Ticks)", targetTicks - getPositionTicks());
-        SmartDashboard.putNumber("Elev Target (In)", targetTicks * ElevConstants.tickToInConversion);
-        SmartDashboard.putNumber("Elev Target (Ticks)", targetTicks);
-        SmartDashboard.putString("Elev Target (LVL)", getTargetLevel().name());
         SmartDashboard.putBoolean("Elev isAtTarget", isAtTarget());
+        SmartDashboard.putBoolean("Elev HardStop", isAtHardStop());
+
+        if(TelemetryConstants.debugTelemetry) {
+            SmartDashboard.putString("Elev Pos (LVL)", getPositionLevel().name());
+            SmartDashboard.putString("Elev Target (LVL)", getTargetLevel().name());
+
+            SmartDashboard.putNumber("Elev Err (In)", (targetTicks - getPositionTicks()) * ElevConstants.tickToInConversion);
+            SmartDashboard.putNumber("Elev Target (In)", targetTicks * ElevConstants.tickToInConversion);
+
+            SmartDashboard.putNumber("Elev Pos (Ticks)", getPositionTicks());
+            SmartDashboard.putNumber("Elev Err (Ticks)", targetTicks - getPositionTicks());
+            SmartDashboard.putNumber("Elev Target (Ticks)", targetTicks);
+
+            SmartDashboard.putNumber("Elev VBus", motor.get());
+            SmartDashboard.putNumber("Elev Current", motor.getStatorCurrent().getValueAsDouble());
+        }
     }
 
     public void setTargetPositionInches(double inches) {
@@ -123,6 +145,9 @@ public class ElevSubsystem extends SubsystemBase {
     public void stop() {
         motor.set(0);
     }
+    public void setAsZero() {
+        motor.setPosition(0);
+    }
 
     public double getPositionInches() {
         return getPositionTicks() * ElevConstants.tickToInConversion;
@@ -138,6 +163,9 @@ public class ElevSubsystem extends SubsystemBase {
     }
     public Level getOverrideLevel() {
         return targetOverrideLvl.getSelected();
+    }
+    public boolean isAtHardStop() {
+        return motor.getReverseLimit().getValue() == ReverseLimitValue.ClosedToGround;
     }
 
     private void configureMotor(TalonFX m) {
@@ -163,6 +191,9 @@ public class ElevSubsystem extends SubsystemBase {
         motionMagicConfigs.MotionMagicCruiseVelocity = 20; // Target cruise velocity of 80 rps
         motionMagicConfigs.MotionMagicAcceleration = 80; // Target acceleration of 80 rps/s (1 second)
         motionMagicConfigs.MotionMagicJerk = 800; // Target jerk of 800 rps/s/s (0.2 seconds)
+
+        // motorConfig.HardwareLimitSwitch.ReverseLimitAutosetPositionEnable = ElevConstants.hardStopResetsEncoder;
+        // motorConfig.HardwareLimitSwitch.ReverseLimitAutosetPositionValue = ElevConstants.hardStopResetValue;
         
         m.getConfigurator().apply(motorConfig);
         
@@ -177,7 +208,7 @@ public class ElevSubsystem extends SubsystemBase {
         isAtTarget = false; //to prevent a single frame where the target has been changed but the boolean hasnt been updated
     }
     private Level getCurrentLevel(double inches) {
-        if(Math.abs(inches - ElevConstants.homeInches) <= ElevConstants.targetThresholdInches)
+        if(inches <= ElevConstants.homeInches + ElevConstants.targetThresholdInches) //allow negatives to count as HOME
             return Level.HOME;
         else if(Math.abs(inches - ElevConstants.lvl1Inches) <= ElevConstants.targetThresholdInches)
             return Level.LVL1;
@@ -211,5 +242,14 @@ public class ElevSubsystem extends SubsystemBase {
             isAtTarget = true;
         else
             isAtTarget = false;
+    }
+    private void checkHardStop() {
+        boolean hardStop = isAtHardStop();
+
+        if(hardStop && !hardStopLast) {
+            motor.setPosition(ElevConstants.hardStopResetValue);
+        }
+
+        hardStopLast = hardStop;
     }
 }

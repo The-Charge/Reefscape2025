@@ -8,19 +8,23 @@ import frc.robot.subsystems.AlgaeRemSubsystem;
 public class AlgaeRemSpin extends Command {
     
     private final AlgaeRemSubsystem algaeRem;
-    private final Timer timeout;
+    private final boolean useTimer;
+    
+    private Timer timeout;
 
-    public AlgaeRemSpin(AlgaeRemSubsystem algaeRemSub) {
+    public AlgaeRemSpin(AlgaeRemSubsystem algaeRemSub, boolean useTimerStop) {
         algaeRem = algaeRemSub;
-        timeout = new Timer();
+        useTimer = useTimerStop;
 
         addRequirements(algaeRem);
     }
 
     @Override
     public void initialize() {
+        timeout = new Timer();
         timeout.start();
-        algaeRem.setFlywheelVBus(AlgaeRemConstants.flywheelActiveVbus);
+
+        algaeRem.setFlywheelVBus(AlgaeRemConstants.spinVBus);
     }
     @Override
     public void end(boolean interrupted) {
@@ -29,6 +33,6 @@ public class AlgaeRemSpin extends Command {
 
     @Override
     public boolean isFinished() {
-        return timeout.hasElapsed(AlgaeRemConstants.spinTime);
+        return useTimer ? timeout.hasElapsed(AlgaeRemConstants.spinTime) : false;
     }
 }

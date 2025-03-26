@@ -1,0 +1,165 @@
+{
+  "name": "Ion",
+  "disableSimplification": true,
+  "rotations": [
+    {
+      "axis": "x",
+      "degrees": 90
+    },
+    {
+      "axis": "y",
+      "degrees": 0
+    },
+    {
+      "axis": "z",
+      "degrees": -85.14
+    }
+  ],
+  "position": [
+    4.136898,
+    0.8321548,
+    2.0124166
+  ],
+  "cameras": [
+    {
+      "name": "Reef Limelight",
+      "rotations": [
+        {
+          "axis": "x",
+          "degrees": 0
+        },
+        {
+          "axis": "y",
+          "degrees": 0
+        },
+        {
+          "axis": "z",
+          "degrees": 0
+        }
+      ],
+      "position": [
+        0.3556,
+        0.127,
+        0.28
+      ],
+      "resolution": [
+        480,
+        240
+      ],
+      "fov": 63.3
+    },
+    {
+      "name": "Funnel Limelight",
+      "rotations": [
+        {
+          "axis": "x",
+          "degrees": -2.5
+        },
+        {
+          "axis": "y",
+          "degrees": 17.5
+        },
+        {
+          "axis": "z",
+          "degrees": 180
+        }
+      ],
+      "position": [
+        -0.342425,
+        -0.03,
+        0.6385
+      ],
+      "resolution": [
+        480,
+        240
+      ],
+      "fov": 63.3
+    }
+  ],
+  "components": [
+    {
+      "zeroedRotations": [
+        {
+          "axis": "x",
+          "degrees": 90
+        },
+        {
+          "axis": "y",
+          "degrees": 0
+        },
+        {
+          "axis": "z",
+          "degrees": -90
+        }
+      ],
+      "zeroedPosition": [
+        0.1741678,
+        -0.1756918,
+        0.0712724
+      ]
+    },
+    {
+      "zeroedRotations": [
+        {
+          "axis": "x",
+          "degrees": 90
+        },
+        {
+          "axis": "y",
+          "degrees": 0
+        },
+        {
+          "axis": "z",
+          "degrees": -90
+        }
+      ],
+      "zeroedPosition": [
+        -0.1461008,
+        0.1775968,
+        0.0724154
+      ]
+    },
+    {
+      "zeroedRotations": [
+        {
+          "axis": "x",
+          "degrees": 90
+        },
+        {
+          "axis": "y",
+          "degrees": 0
+        },
+        {
+          "axis": "z",
+          "degrees": -90
+        }
+      ],
+      "zeroedPosition": [
+        -0.046863,
+        -0.1625854,
+        0.5751322
+      ]
+    },
+    {
+      "zeroedRotations": [
+        {
+          "axis": "x",
+          "degrees": 90
+        },
+        {
+          "axis": "y",
+          "degrees": 0
+        },
+        {
+          "axis": "z",
+          "degrees": -90
+        }
+      ],
+      "zeroedPosition": [
+        0.13,
+        0.07,
+        -0.015
+      ]
+    }
+  ]
+}

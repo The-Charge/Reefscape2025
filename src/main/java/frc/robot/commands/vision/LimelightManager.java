@@ -1,8 +1,13 @@
 package frc.robot.commands.vision;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
+import static edu.wpi.first.units.Units.DegreesPerSecond;
+
+import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import frc.robot.LimelightHelpers;
+import frc.robot.constants.TelemetryConstants;
 import frc.robot.subsystems.SwerveSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
 
@@ -18,50 +23,133 @@ public class LimelightManager extends Command {
     }
 
     @Override
-    public boolean runsWhenDisabled() {
-        return true;
-    }
-
-    @Override
-    public void initialize() {
-        System.out.println("LimelightManager Initialize");
-    }
-    
-    @Override
     public void execute() {
-        Pose2d avgPose;
-        Pose2d reefPose = reefLimelight.getEstimatedPose();
-        Pose2d funnelPose = funnelLimelight.getEstimatedPose();
+        double yaw = swerve.getHeading().getDegrees();
+        double yawRate = Math.abs(swerve.getSwerveDrive().getGyro().getYawAngularVelocity().in(DegreesPerSecond));
+        double speed = Math.hypot(
+                swerve.getFieldVelocity().vxMetersPerSecond,
+                swerve.getFieldVelocity().vyMetersPerSecond
+        );
 
-        if (reefPose == null && funnelPose == null) {
-            return;
-        } else if (reefPose == null) {
-            avgPose = funnelPose;
-        } else if (funnelPose == null) {
-            avgPose = reefPose;
-        } else {
-            double avgX = (reefPose.getX() + funnelPose.getX()) / 2;
-            double avgY = (reefPose.getY() + funnelPose.getY()) / 2;
-            Rotation2d avgRot = reefPose.getRotation().plus(funnelPose.getRotation()).times(0.5);
+        LimelightHelpers.PoseEstimate reefEstimate = reefLimelight.getLLHPoseEstimate(yaw, 0);
+        LimelightHelpers.PoseEstimate funnelEstimate = funnelLimelight.getLLHPoseEstimate(yaw, 0);
+        LimelightHelpers.PoseEstimate reefEstimateTag1 = reefLimelight.getLLHPoseEstimateTag1(yaw, 0);
+        LimelightHelpers.PoseEstimate funnelEstimateTag1 = funnelLimelight.getLLHPoseEstimateTag1(yaw, 0);
+        // LimelightHelpers.PoseEstimate funnelEstimate = null;
 
-            avgPose = new Pose2d(avgX, avgY, avgRot);
+        // Pose2d reefPose = reefLimelight.getEstimatedPose(yaw, yawRate);
+        // Pose2d funnelPose = funnelLimelight.getEstimatedPose(yaw, yawRate);
+
+        // double reefTime = reefLimelight.getPoseTimestamp();
+        // double funnelTime = funnelLimelight.getPoseTimestamp();
+
+        double reefAmbig = reefLimelight.getAmbiguity();
+        double funnelAmbig = funnelLimelight.getAmbiguity();
+
+        int reefCount = reefLimelight.getTagCount();
+        int funnelCount = funnelLimelight.getTagCount();
+
+        if (reefEstimate != null) {
+            SmartDashboard.putNumber("Reef BotX Tag2", reefEstimate.pose.getX());
+            SmartDashboard.putNumber("Reef BotY Tag2", reefEstimate.pose.getY());
+        }
+        if(reefEstimateTag1 != null) {
+            SmartDashboard.putNumber("Reef BotX Tag1", reefEstimateTag1.pose.getX());
+            SmartDashboard.putNumber("Reef BotY Tag1", reefEstimateTag1.pose.getY());
+        }
+        if (funnelEstimate != null) {
+            SmartDashboard.putNumber("Funnel BotX Tag2", funnelEstimate.pose.getX());
+            SmartDashboard.putNumber("Funnel BotY Tag2", funnelEstimate.pose.getY());
+        }
+        if(funnelEstimateTag1 != null) {
+            SmartDashboard.putNumber("Funnel BotX Tag1", funnelEstimateTag1.pose.getX());
+            SmartDashboard.putNumber("Funnel BotY Tag1", funnelEstimateTag1.pose.getY());
+        }
+        if(TelemetryConstants.debugTelemetry) {
+            SmartDashboard.putBoolean("reef estimated", false);
+            SmartDashboard.putBoolean("funnel estimated", false);
+
+            SmartDashboard.putNumber("reef ambig", reefAmbig);
+            SmartDashboard.putNumber("funnel ambig", funnelAmbig);
+
+            SmartDashboard.putNumber("swerve rot speed", yawRate);
         }
 
-        double avgTime = Double.NaN;
-        double reefTime = reefLimelight.getPoseTimestamp();
-        double funnelTime = funnelLimelight.getPoseTimestamp();
+        boolean reefEstim = (reefEstimate != null && reefCount > 0 && yawRate < Units.degreesToRadians(60)); // reefAmbig < 0.2 ||
+        boolean funnelEstim = (funnelEstimate != null && funnelCount > 0 && yawRate < Units.degreesToRadians(60)); // funnelAmbig < 0.2 ||
 
-        if (Double.isNaN(reefTime) && Double.isNaN(funnelTime)) {
-            System.err.println("Limelight could not get timestamp.");
-        } else if (Double.isNaN(reefTime)) {
-            avgTime = funnelTime;
-        } else if (Double.isNaN(funnelTime)) {
-            avgTime = reefTime;
-        } else {
-            avgTime = (reefTime + funnelTime) / 2;
+        SmartDashboard.putBoolean("Tag1 rotation", false);
+        if ((reefAmbig < 0.2 || reefCount > 1) && yawRate < Units.degreesToRadians(36) && speed < 0.5) {
+            swerve.addVisionReading(reefEstimateTag1.pose, reefEstimateTag1.timestampSeconds, VecBuilder.fill(9999999,9999999,2));
+            SmartDashboard.putBoolean("Tag1 rotation", true);
+        }
+        
+        if ((funnelAmbig < 0.2 || funnelCount > 1) && yawRate < Units.degreesToRadians(36) && speed < 0.5) {
+            swerve.addVisionReading(funnelEstimateTag1.pose, funnelEstimateTag1.timestampSeconds, VecBuilder.fill(9999999,9999999,2));
+            SmartDashboard.putBoolean("Tag1 rotation", true);
         }
 
-        swerve.addVisionReading(avgPose, avgTime);
+        if (reefEstim && funnelEstim) {
+            if (reefCount > funnelCount) {
+                if(TelemetryConstants.debugTelemetry)
+                    SmartDashboard.putBoolean("reef estimated", true);
+                
+                swerve.addVisionReading(reefEstimate.pose, reefEstimate.timestampSeconds, VecBuilder.fill(.7,.7,9999999));
+            } else if (reefCount < funnelCount) {
+                if(TelemetryConstants.debugTelemetry)
+                    SmartDashboard.putBoolean("funnel estimated", true);
+
+                swerve.addVisionReading(funnelEstimate.pose, funnelEstimate.timestampSeconds, VecBuilder.fill(.7,.7,9999999));
+            } else if (reefAmbig < funnelAmbig) {
+                if(TelemetryConstants.debugTelemetry)
+                    SmartDashboard.putBoolean("reef estimated", true);
+
+                swerve.addVisionReading(reefEstimate.pose, reefEstimate.timestampSeconds, VecBuilder.fill(.7,.7,9999999));
+            } else {
+                if(TelemetryConstants.debugTelemetry)
+                    SmartDashboard.putBoolean("funnel estimated", true);
+
+                swerve.addVisionReading(funnelEstimate.pose, funnelEstimate.timestampSeconds, VecBuilder.fill(.7,.7,9999999));
+            }
+        } else if (reefEstim) {
+            if(TelemetryConstants.debugTelemetry)
+                SmartDashboard.putBoolean("reef estimated", true);
+
+            swerve.addVisionReading(reefEstimate.pose, reefEstimate.timestampSeconds, VecBuilder.fill(.7,.7,9999999));
+        } else if (funnelEstim) {
+            if(TelemetryConstants.debugTelemetry)
+                SmartDashboard.putBoolean("funnel estimated", true);
+                
+            swerve.addVisionReading(funnelEstimate.pose, funnelEstimate.timestampSeconds, VecBuilder.fill(.7,.7,9999999));
+        }
+
+        // Rotation2d swerveRot = swerve.getHeading();
+
+        // if (reefPose == null && funnelPose == null) {
+        //     return;
+        // } else if (reefPose == null) {
+        //     avgPose = funnelPose;
+        // } else if (funnelPose == null) {
+        //     avgPose = reefPose;
+        // } else {
+        //     double avgX = (reefPose.getX() + funnelPose.getX()) / 2;
+        //     double avgY = (reefPose.getY() + funnelPose.getY()) / 2;
+        //     // Rotation2d avgRot = reefPose.getRotation().plus(funnelPose.getRotation()).times(0.5);
+
+        //     avgPose = new Pose2d(avgX, avgY, swerveRot);
+        // }    
+
+        // if (Double.isNaN(reefTime) && Double.isNaN(funnelTime)) {
+        //     System.err.println("Limelight could not get timestamp.");
+        // } else if (Double.isNaN(reefTime)) {
+        //     avgTime = funnelTime;
+        // } else if (Double.isNaN(funnelTime)) {
+        //     avgTime = reefTime;
+        // } else {
+        //     avgTime = (reefTime + funnelTime) / 2;
+        // }
+
+        // swerve.addVisionReading(avgPose, avgTime);
     }
 
     @Override

@@ -8,7 +8,9 @@ import static edu.wpi.first.units.Units.Meter;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
@@ -33,15 +35,20 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Config;
 import frc.robot.constants.SwerveConstants;
+import frc.robot.constants.TelemetryConstants;
+import frc.robot.constants.VisionConstants.ApriltagConstants;
 import swervelib.SwerveController;
 import swervelib.SwerveDrive;
 import swervelib.SwerveDriveTest;
@@ -50,7 +57,7 @@ import swervelib.parser.SwerveControllerConfiguration;
 import swervelib.parser.SwerveDriveConfiguration;
 import swervelib.parser.SwerveParser;
 import swervelib.telemetry.SwerveDriveTelemetry;
-import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
+import edu.wpi.first.math.Matrix;
 
 public class SwerveSubsystem extends SubsystemBase
 {
@@ -66,7 +73,7 @@ public class SwerveSubsystem extends SubsystemBase
   /**
    * Enable vision odometry updates while driving.
    */
-  private final boolean             visionDriveTest     = false;
+  private final boolean             visionDriveTest     = true;
   /**
    * PhotonVision class to keep an accurate odometry.
    */
@@ -77,10 +84,11 @@ public class SwerveSubsystem extends SubsystemBase
    *
    * @param directory Directory of swerve drive config files.
    */
+
   public SwerveSubsystem(File directory)
   {
     // Configure the Telemetry before creating the SwerveDrive to avoid unnecessary objects being created.
-    SwerveDriveTelemetry.verbosity = TelemetryVerbosity.HIGH;
+    SwerveDriveTelemetry.verbosity = TelemetryConstants.swerveVerbosity;
     try
     {
       swerveDrive = new SwerveParser(directory).createSwerveDrive(SwerveConstants.MAX_SPEED,
@@ -96,7 +104,7 @@ public class SwerveSubsystem extends SubsystemBase
     
     swerveDrive.setChassisDiscretization(SwerveConstants.useChassisVelocityCorrection, SwerveConstants.chassisVelocityCorrection);
     swerveDrive.setHeadingCorrection(false); // Heading correction should only be used while controlling the robot via angle.
-    swerveDrive.setCosineCompensator(SwerveConstants.useCosineCompensator);//!SwerveDriveTelemetry.isSimulation); // Disables cosine compensation for simulations since it causes discrepancies not seen in real life.
+    swerveDrive.setCosineCompensator(SwerveConstants.useCosineCompensator && !SwerveDriveTelemetry.isSimulation); // Disables cosine compensation for simulations since it causes discrepancies not seen in real life.
     swerveDrive.setAngularVelocityCompensation(SwerveConstants.useAngularCompensationTeleop, SwerveConstants.useAngularCompensationAuton, SwerveConstants.angularCompensation); //Correct for skew that gets worse as angular velocity increases. Start with a coefficient of 0.1
 
     if (visionDriveTest)
@@ -139,6 +147,16 @@ public class SwerveSubsystem extends SubsystemBase
     {
       swerveDrive.updateOdometry();
 //      vision.updatePoseEstimation(swerveDrive);
+    }
+
+    if(getCurrentCommand() == null)
+          SmartDashboard.putString("Swerve RunningCommand", "None");
+      else
+          SmartDashboard.putString("Swerve RunningCommand", getCurrentCommand().getName());
+
+    if(TelemetryConstants.debugTelemetry) {
+      SmartDashboard.putNumber("Swerve BotX", getPose().getX());
+      SmartDashboard.putNumber("Swerve BotY", getPose().getY());
     }
   }
 
@@ -717,6 +735,13 @@ public class SwerveSubsystem extends SubsystemBase
     swerveDrive.addVisionMeasurement(pose, timestampSeconds);
   }
 
+  /*
+   * Add odometry readings using vision
+   */
+  public void addVisionReading(Pose2d pose, double timestampSeconds, Matrix<N3, N1> stdDevs) {
+    swerveDrive.addVisionMeasurement(pose, timestampSeconds, stdDevs);
+  }
+
   /**
    * Add a fake vision reading for testing purposes.
    */
@@ -733,5 +758,67 @@ public class SwerveSubsystem extends SubsystemBase
   public SwerveDrive getSwerveDrive()
   {
     return swerveDrive;
+  }
+  
+  public Pose2d getClosestReefTagPose() {
+    final List<Pose2d> tagPoses = new ArrayList<>();
+    for (int i = 1; i <= 22; i++) {
+      if (i == 4 || i == 5 || i == 14 || i == 15 || i == 3 || i == 16 || i == 1 || i == 2 || i == 12 || i == 13)
+        continue;
+      tagPoses.add(ApriltagConstants.TAG_POSES[i].toPose2d());
+    }
+    return swerveDrive.getPose().nearest(tagPoses);
+  }
+
+  public Pose2d getClosestStationTagPose() {
+    final List<Pose2d> tagPoses = new ArrayList<>();
+    for (int i = 1; i <= 22; i++) {
+      if (!(i == 1 || i == 2 || i == 12 || i == 13))
+        continue;
+      tagPoses.add(ApriltagConstants.TAG_POSES[i].toPose2d());
+    }
+    return swerveDrive.getPose().nearest(tagPoses);
+  }
+  
+  public Pose2d getClosestTagPose(){ //Ignores barge and processor
+    final List<Pose2d> tagPoses = new ArrayList<>();
+    for (int i = 1; i <= 22; i++) {
+            if (i == 4 || i == 5 || i == 14 || i == 15 || i == 3 || i == 16)
+                continue;
+            tagPoses.add(ApriltagConstants.TAG_POSES[i].toPose2d());
+        }
+        return swerveDrive.getPose().nearest(tagPoses);
+  }
+
+  public int getClosestTagID() {
+    Pose2d temp = getClosestTagPose();
+    for (int i = 1; i <= 22; i++) {
+      if (temp.equals(ApriltagConstants.TAG_POSES[i].toPose2d())) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  public int getClosestTagIDReef() {
+    Pose2d temp = getClosestReefTagPose();
+    int[] array = {6,7,8,9,10,11,17,18,19,20,21,22};
+    for (int num : array) {
+      if (temp.equals(ApriltagConstants.TAG_POSES[num].toPose2d())) {
+        return num;
+      }
+    }
+    return -1;
+  }
+
+  public int getClosestTagIDStation() {
+    Pose2d temp = getClosestStationTagPose();
+    int[] array = { 1, 2, 12, 13 };
+    for (int num : array) {
+      if (temp.equals(ApriltagConstants.TAG_POSES[num].toPose2d())) {
+        return num;
+      }
+    }
+    return -1;
   }
 }

@@ -1,7 +1,5 @@
 package frc.robot.subsystems;
 
-import static edu.wpi.first.units.Units.DegreesPerSecond;
-
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -14,175 +12,150 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.LimelightHelpers;
 import frc.robot.LimelightHelpers.RawFiducial;
 import frc.robot.constants.VisionConstants.ApriltagConstants;
-import limelight.Limelight;
-import limelight.estimator.LimelightPoseEstimator;
-import limelight.structures.LimelightSettings.LEDMode;
 
-public class VisionSubsystem extends SubsystemBase{
-    SwerveSubsystem swerve;
+public class VisionSubsystem extends SubsystemBase {
+  String ll_name;
 
-    //private final AprilTagFieldLayout aprilTagFieldLayout = AprilTagFieldLayout.loadField(AprilTagFields.k2025Reefscape);
+  public VisionSubsystem(String ll_name, Pose3d cameraOffset, boolean hasUSBCam) {
+    this.ll_name = ll_name;
 
-    Limelight limelight;
-    LimelightPoseEstimator llPoseEstimator;
+    LimelightHelpers.setCameraPose_RobotSpace(ll_name, cameraOffset.getX(), cameraOffset.getY(), cameraOffset.getZ(),
+        Units.radiansToDegrees(cameraOffset.getRotation().getX()), Units.radiansToDegrees(cameraOffset.getRotation().getY()), Units.radiansToDegrees(cameraOffset.getRotation().getZ()));
+    
+    setPipeline(1);
+    if(hasUSBCam)
+      NetworkTableInstance.getDefault().getTable(ll_name).getEntry("stream").setNumber(2); //usb camera as main and limelight as PiP
+  }
 
-    public String ll_name;
-    RawFiducial[] fiducials;
+  @Override
+  public void periodic() {
+    if(getCurrentCommand() == null)
+        SmartDashboard.putString(ll_name + " RunningCommand", "None");
+    else
+        SmartDashboard.putString(ll_name + " RunningCommand", getCurrentCommand().getName());
+  }
 
-    int tagid;
-    double txnc;
-    double tync;
-    double ta;
-    double distToCamera;
-    double distToRobot;
-    double ambiguity;
-    double currentPipeline;
-
-    public VisionSubsystem(SwerveSubsystem swerve, String ll_name, Pose3d cameraOffset){
-      this.swerve = swerve;
-      this.ll_name = ll_name;
-      //Setup YALL limelight object (maybe should be in initialize)
-      limelight = new Limelight(ll_name);
-      NetworkTableInstance.getDefault().getTable(ll_name).getEntry("pipeline").setNumber(1);
-      limelight.getSettings().withLimelightLEDMode(LEDMode.PipelineControl).withCameraOffset(cameraOffset).save();
-      llPoseEstimator = limelight.getPoseEstimator(true);
-      
-    }
-
-    @Override
-    public void periodic(){
-      updateLimelightTracking();
-      UpdateLocalization();
-    }
+  public LimelightHelpers.PoseEstimate getLLHPoseEstimate(double yaw, double yawRate) {
+    LimelightHelpers.SetRobotOrientation(ll_name, yaw, yawRate, 0, 0, 0, 0);
+    return LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(ll_name);
+  }
   
-    public void updateLimelightTracking(){ 
-      fiducials = LimelightHelpers.getRawFiducials(ll_name);
-      for (RawFiducial fiducial : fiducials) {
-          tagid = fiducial.id;                   // Tag ID
-          txnc = fiducial.txnc;                  // X offset (no crosshair)
-          tync = fiducial.tync;                  // Y offset (no crosshair)
-          ta = fiducial.ta;                      // Target area
-          distToCamera = fiducial.distToCamera;  // Distance to camera
-          distToRobot = fiducial.distToRobot;    // Distance to robot
-          ambiguity = fiducial.ambiguity;        // Tag pose ambiguity
+  public LimelightHelpers.PoseEstimate getLLHPoseEstimateTag1(double yaw, double yawRate) {
+    LimelightHelpers.SetRobotOrientation(ll_name, yaw, yawRate, 0, 0, 0, 0);
+    return LimelightHelpers.getBotPoseEstimate_wpiBlue(ll_name);
+  }
+  
+  public Pose2d getEstimatedPose(double yaw, double yawRate) {
+    NetworkTable table = NetworkTableInstance.getDefault().getTable(ll_name);
+
+    // Double[] poseArray = { yaw, yawRate, 0., 0., 0., 0. };
+    // table.getEntry("robot_orientation_set").setDoubleArray(poseArray);
+
+    Double[] botPoseArray = table.getEntry("botpose_wpiblue").getDoubleArray(new Double[] {});
+    if (botPoseArray.length == 0 || botPoseArray[7] == 0) {
+      return null;
+    }
+    Pose2d pose = new Pose2d(botPoseArray[0], botPoseArray[1], new Rotation2d(Units.degreesToRadians(botPoseArray[5])));
+
+    return pose;
+  }
+
+  public double getPoseTimestamp() {
+    NetworkTable table = NetworkTableInstance.getDefault().getTable(ll_name);
+
+    Double[] botPoseArray = table.getEntry("botpose_wpiblue").getDoubleArray(new Double[] {});
+    if (botPoseArray.length == 0) {
+      return Double.NaN;
+    }
+    double timeStamp = Timer.getFPGATimestamp() - Units.millisecondsToSeconds(botPoseArray[6]);
+
+    return timeStamp;
+  }
+
+  public void setPipeline(int index) {
+    LimelightHelpers.setPipelineIndex(ll_name, index);
+  }
+
+  public boolean getObjectedDetected() {
+    return LimelightHelpers.getTV(ll_name);
+  }
+
+  public int getTagID() {
+    return (int) LimelightHelpers.getFiducialID(ll_name);
+  }
+
+  public double getAmbiguity() {
+    Double[] array = NetworkTableInstance.getDefault().getTable(ll_name).getEntry("rawfiducials")
+        .getDoubleArray(new Double[] {});
+    if (array.length == 0) {
+      return Double.NaN;
+    }
+    double avg = 0;
+    double arrlen = array.length / 7;
+    for (int i = 1; i <= arrlen; i++) {
+      avg += array[i * 7 - 1] / arrlen;
+    }
+    return avg;
+  }
+
+  public double getTX() {
+    return LimelightHelpers.getTX(ll_name);
+  }
+
+  public double getTY() {
+    return LimelightHelpers.getTY(ll_name);
+  }
+
+  public double getTA() {
+    return LimelightHelpers.getTA(ll_name);
+  }
+
+  public double getCurrentPipeline() {
+    return LimelightHelpers.getCurrentPipelineIndex(ll_name);
+  }
+
+  public double getDistToCamera() {
+    RawFiducial[] fids = LimelightHelpers.getRawFiducials(ll_name);
+    if (fids.length == 0) {
+      return -1;
+    }
+    return fids[1].distToCamera;
+  }
+
+  public Pose3d getRobotPoseTagSpace() {
+    return LimelightHelpers.getBotPose3d_TargetSpace(ll_name);
+  }
+
+  public int getTagCount() {
+    try {
+      return LimelightHelpers.getBotPoseEstimate_wpiBlue(ll_name).tagCount;
+    } catch (Exception e) {
+      return -1;
     }
   }
-    public void setPipeline(double index){
-      NetworkTableInstance.getDefault().getTable(ll_name).getEntry("pipeline").setNumber(index);
+
+  public Pose3d[] getTagPose3ds() {
+    Double[] table = NetworkTableInstance.getDefault().getTable(ll_name).getEntry("rawfiducials")
+        .getDoubleArray(new Double[] {});
+    if (table.length == 0) {
+      return new Pose3d[] {};
     }
-
-    public void adjustDriverPipeline(){
-      if (currentPipeline == 1) 
-        NetworkTableInstance.getDefault().getTable(ll_name).getEntry("pipeline").setNumber(0);
-      else
-        NetworkTableInstance.getDefault().getTable(ll_name).getEntry("pipeline").setNumber(1);
-    }
-    
-    public Pose2d getEstimatedPose() {
-      NetworkTable table = NetworkTableInstance.getDefault().getTable(ll_name);
-
-      Double[] botPoseArray = table.getEntry("botpose_orb_wpiblue").getDoubleArray(new Double[] {});
-
-      if (botPoseArray.length == 0 || botPoseArray[7] == 0) {
-        return null;
+    Pose3d[] poses = new Pose3d[table.length / 7];
+    for (int i = 0; i < table.length / 7; i++) {
+      int id = (int) table[i * 7].doubleValue();
+      if (id > 23 || id < 1) {
+        continue;
       }
-
-      Pose2d pose = new Pose2d(botPoseArray[0], botPoseArray[1], new Rotation2d(Units.degreesToRadians(botPoseArray[5])));
-
-      return pose;
+      poses[i] = ApriltagConstants.TAG_POSES[id];
     }
-    
-    public double getPoseTimestamp() {
-      NetworkTable table = NetworkTableInstance.getDefault().getTable(ll_name);
-
-      Double[] botPoseArray = table.getEntry("botpose_orb_wpiblue").getDoubleArray(new Double[] {});
-
-      if (botPoseArray.length == 0) {
-        return Double.NaN;
-      }
-
-      double timeStamp = Timer.getFPGATimestamp() - Units.millisecondsToSeconds(botPoseArray[6]);
-
-      return timeStamp;
-    }
-   
-    public void UpdateLocalization() {
-      NetworkTable table = NetworkTableInstance.getDefault().getTable(ll_name);
-
-      double yaw = swerve.getHeading().getDegrees();
-      double yawRate = swerve.getSwerveDrive().getGyro().getYawAngularVelocity().in(DegreesPerSecond);
-      Double[] poseArray = {yaw, yawRate, 0., 0., 0., 0.};
-      table.getEntry("robot_orientation_set").setDoubleArray(poseArray);
-
-      Double[] rawFiducials = table.getEntry("rawfiducials").getDoubleArray(new Double[] { });
-      if (rawFiducials.length == 0) {
-        SmartDashboard.putBoolean(ll_name + " Pose Estimated ", false);
-        return;
-      }
-
-      double avgAmbig = 0;
-      int rawFiducialsLength = rawFiducials.length / 7;
-      for (int i = 1; i <= rawFiducialsLength; i++) {
-        SmartDashboard.putNumber(ll_name + " TagID #" + i, rawFiducials[i * 7 - 7]);
-        SmartDashboard.putNumber(ll_name + " TagX #" + i, rawFiducials[i * 7 - 6]);
-        SmartDashboard.putNumber(ll_name + " TagY #" + i, rawFiducials[i * 7 - 5]);
-        SmartDashboard.putNumber(ll_name + " Distance to tag #" + i, rawFiducials[i * 7 - 3]); // tag to camera
-        SmartDashboard.putNumber(ll_name + " Ambiguity #" + i, rawFiducials[i * 7 - 1]);
-
-        avgAmbig += rawFiducials[i * 7 - 1] / rawFiducialsLength;
-      }
-
-      SmartDashboard.putNumber("avg ambigg " + ll_name, avgAmbig);
-
-      if (avgAmbig > 0.5) {
-        SmartDashboard.putBoolean(ll_name + " Pose Estimated ", false);
-        return;
-      }
-
-      Double[] botPoseArray = table.getEntry("botpose_orb_wpiblue").getDoubleArray(new Double[] { });
-      
-      if (botPoseArray.length == 0) {
-        SmartDashboard.putBoolean(ll_name + " Pose Estimated ", false);
-        return;
-      }
-
-      double timeStamp = Timer.getFPGATimestamp() - Units.millisecondsToSeconds(botPoseArray[6]);
-      Pose2d pose = new Pose2d(botPoseArray[0], botPoseArray[1], new Rotation2d(Units.degreesToRadians(botPoseArray[5])));
-      // swerve.addVisionReading(pose, timeStamp);
-
-      SmartDashboard.putBoolean(ll_name + " Pose Estimated ", true);
-    }
-    
-    public boolean robotRotationWithinThreshold(int tagid){
-      return 
-        Math.abs(ApriltagConstants.TAG_POSES[tagid].getRotation().getAngle() * 180 / Math.PI - 180
-        - llPoseEstimator.getPoseEstimate().get().pose.toPose2d().getRotation().getDegrees())
-        < ApriltagConstants.ANGLE_POSE_TOLERANCE;
-    }
-
-  
-    public boolean getObjectedDetected(){
-      return LimelightHelpers.getTV(ll_name);
-    }
-    public int getTagID(){
-      return tagid;
-    }
-    public double getTXNC(){
-      return txnc;
-    }
-    public double getTYNC(){
-      return tync;
-    }
-    public double getTA(){
-      return ta;
-    }
-    public double getDistToRobot(){
-      return distToRobot;
-    }
-    public double getDistToCamera(){
-      return distToCamera;
-    }
-    public String getName(){
-      return ll_name;
+    return poses;
   }
+
+  public String getName() {
+    return ll_name;
+  }
+
+  public enum ReefPosition {
+    LEFT, MIDDLE, RIGHT
+  }  
 }
