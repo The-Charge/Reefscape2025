@@ -3,10 +3,12 @@ package frc.robot.commands.vision;
 import static edu.wpi.first.units.Units.DegreesPerSecond;
 
 import edu.wpi.first.math.VecBuilder;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.LimelightHelpers;
+import frc.robot.commands.LoggingManager;
 import frc.robot.constants.TelemetryConstants;
 import frc.robot.subsystems.SwerveSubsystem;
 import frc.robot.subsystems.VisionSubsystem;
@@ -22,6 +24,10 @@ public class LimelightManager extends Command {
         this.funnelLimelight = funnnelLimelight;
     }
 
+    @Override
+    public void initialize() {
+        LoggingManager.logAndAutoSendValue("LimelightManager running", true);
+    }
     @Override
     public void execute() {
         double yaw = swerve.getHeading().getDegrees();
@@ -49,21 +55,23 @@ public class LimelightManager extends Command {
         int reefCount = reefLimelight.getTagCount();
         int funnelCount = funnelLimelight.getTagCount();
 
+        LoggingManager.logValue("ReefTags", Pose3d.struct, reefLimelight.getTagPose3ds(), true);
+        LoggingManager.logValue("FunnelTags", Pose3d.struct, funnelLimelight.getTagPose3ds(), true);
         if (reefEstimate != null) {
-            SmartDashboard.putNumber("Reef BotX Tag2", reefEstimate.pose.getX());
-            SmartDashboard.putNumber("Reef BotY Tag2", reefEstimate.pose.getY());
+            LoggingManager.logAndAutoSendValue("Reef BotX Tag2", reefEstimate.pose.getX());
+            LoggingManager.logAndAutoSendValue("Reef BotY Tag2", reefEstimate.pose.getY());
         }
         if(reefEstimateTag1 != null) {
-            SmartDashboard.putNumber("Reef BotX Tag1", reefEstimateTag1.pose.getX());
-            SmartDashboard.putNumber("Reef BotY Tag1", reefEstimateTag1.pose.getY());
+            LoggingManager.logAndAutoSendValue("Reef BotX Tag1", reefEstimateTag1.pose.getX());
+            LoggingManager.logAndAutoSendValue("Reef BotY Tag1", reefEstimateTag1.pose.getY());
         }
         if (funnelEstimate != null) {
-            SmartDashboard.putNumber("Funnel BotX Tag2", funnelEstimate.pose.getX());
-            SmartDashboard.putNumber("Funnel BotY Tag2", funnelEstimate.pose.getY());
+            LoggingManager.logAndAutoSendValue("Funnel BotX Tag2", funnelEstimate.pose.getX());
+            LoggingManager.logAndAutoSendValue("Funnel BotY Tag2", funnelEstimate.pose.getY());
         }
         if(funnelEstimateTag1 != null) {
-            SmartDashboard.putNumber("Funnel BotX Tag1", funnelEstimateTag1.pose.getX());
-            SmartDashboard.putNumber("Funnel BotY Tag1", funnelEstimateTag1.pose.getY());
+            LoggingManager.logAndAutoSendValue("Funnel BotX Tag1", funnelEstimateTag1.pose.getX());
+            LoggingManager.logAndAutoSendValue("Funnel BotY Tag1", funnelEstimateTag1.pose.getY());
         }
         if(TelemetryConstants.debugTelemetry) {
             SmartDashboard.putBoolean("reef estimated", false);
@@ -78,15 +86,15 @@ public class LimelightManager extends Command {
         boolean reefEstim = (reefEstimate != null && reefCount > 0 && yawRate < Units.degreesToRadians(60)); // reefAmbig < 0.2 ||
         boolean funnelEstim = (funnelEstimate != null && funnelCount > 0 && yawRate < Units.degreesToRadians(60)); // funnelAmbig < 0.2 ||
 
-        SmartDashboard.putBoolean("Tag1 rotation", false);
+        LoggingManager.logAndAutoSendValue("Tag1 rotation", false);
         if ((reefAmbig < 0.2 || reefCount > 1) && yawRate < Units.degreesToRadians(36) && speed < 0.5) {
             swerve.addVisionReading(reefEstimateTag1.pose, reefEstimateTag1.timestampSeconds, VecBuilder.fill(9999999,9999999,2));
-            SmartDashboard.putBoolean("Tag1 rotation", true);
+            LoggingManager.logAndAutoSendValue("Tag1 rotation", true);
         }
         
         if ((funnelAmbig < 0.2 || funnelCount > 1) && yawRate < Units.degreesToRadians(36) && speed < 0.5) {
             swerve.addVisionReading(funnelEstimateTag1.pose, funnelEstimateTag1.timestampSeconds, VecBuilder.fill(9999999,9999999,2));
-            SmartDashboard.putBoolean("Tag1 rotation", true);
+            LoggingManager.logAndAutoSendValue("Tag1 rotation", true);
         }
 
         if (reefEstim && funnelEstim) {
@@ -150,6 +158,10 @@ public class LimelightManager extends Command {
         // }
 
         // swerve.addVisionReading(avgPose, avgTime);
+    }
+    @Override
+    public void end(boolean interrupted) {
+        LoggingManager.logAndAutoSendValue("LimelightManager running", false);
     }
 
     @Override

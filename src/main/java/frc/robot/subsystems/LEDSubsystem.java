@@ -3,11 +3,10 @@ package frc.robot.subsystems;
 import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.AddressableLEDBufferView;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.commands.LoggingManager;
 import frc.robot.constants.LEDConstants;
-import frc.robot.constants.TelemetryConstants;
 
 public class LEDSubsystem extends SubsystemBase {
 
@@ -50,9 +49,9 @@ public class LEDSubsystem extends SubsystemBase {
         update();
 
         if(getCurrentCommand() == null)
-            SmartDashboard.putString("LED RunningCommand", "None");
+            LoggingManager.logAndAutoSendValue("LED RunningCommand", "None");
         else
-            SmartDashboard.putString("LED RunningCommand", getCurrentCommand().getName());
+            LoggingManager.logAndAutoSendValue("LED RunningCommand", getCurrentCommand().getName());
     }
 
     public AddressableLEDBufferView fullBuff() {

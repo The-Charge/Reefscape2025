@@ -13,6 +13,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.commands.LoggingManager;
 import frc.robot.constants.SwerveConstants;
 import frc.robot.constants.TelemetryConstants;
 
@@ -49,12 +50,15 @@ public class Robot extends TimedRobot {
     */
     @Override
     public void robotInit() {   
-        DataLogManager.start(); //All logging is dumped into either /home/lvuser/logs or a USB drive if one is connected to the robot
+        DataLogManager.start("", "", 0.125); //Use default dir and filename, All logging is dumped into either /home/lvuser/logs or a USB drive if one is connected to the robot
+        DataLogManager.logNetworkTables(false); //use custom logging with LoggingManager
         DriverStation.startDataLog(DataLogManager.getLog(), true); //enable logging DS control and joystick input
+        LoggingManager.logAndAutoSendValue("LimelightManager running", false);
 
         // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
         // autonomous chooser on the dashboard.
         m_robotContainer = new RobotContainer();
+        m_robotContainer.getElev().resetL4Override();
         
         // Create a timer to disable motor brake a few seconds after disable.  This will let the robot stop
         // immediately when disabled, but then also let it be pushed more 
@@ -91,10 +95,8 @@ public class Robot extends TimedRobot {
         // block in order for anything in the Command-based framework to work.
         CommandScheduler.getInstance().run();
 
-        if(TelemetryConstants.debugTelemetry) {
-            SmartDashboard.putNumber("Total Amps", m_pdp.getTotalCurrent());
-            SmartDashboard.putNumber("Battery Voltage", m_pdp.getVoltage());
-        }
+        LoggingManager.logAndAutoSendValue("Total Amps", m_pdp.getTotalCurrent());
+        LoggingManager.logAndAutoSendValue("Battery Voltage", m_pdp.getVoltage());
     }
     
     /**
@@ -103,8 +105,6 @@ public class Robot extends TimedRobot {
     @Override
     public void disabledInit()
     {
-        m_robotContainer.cancelLoggingManager();
-
         m_robotContainer.setMotorBrake(true);
         disabledTimer.reset();
         disabledTimer.start();
@@ -130,8 +130,6 @@ public class Robot extends TimedRobot {
     @Override
     public void autonomousInit()
     {
-        m_robotContainer.scheduleLoggingManager();
-
         m_robotContainer.clearTeleopDefaultCommand();
         m_robotContainer.setMotorBrake(true);
         m_autonomousCommand = m_robotContainer.getAutonomousCommand();
@@ -146,6 +144,7 @@ public class Robot extends TimedRobot {
 
         m_robotContainer.displayAuto();
         m_robotContainer.getHeadSubsystem().recheckHasCoral();
+        m_robotContainer.scheduleLimelightAuton();
     }
     
     /**
@@ -166,8 +165,6 @@ public class Robot extends TimedRobot {
         else {
             CommandScheduler.getInstance().cancelAll();
         }
-        m_robotContainer.scheduleLoggingManager();
-
         m_robotContainer.scheduleLimelight();
         
         m_robotContainer.setTeleopDefaultCommand();
@@ -183,7 +180,7 @@ public class Robot extends TimedRobot {
     @Override
     public void teleopPeriodic()
     {
-        SmartDashboard.putNumber("Time Remaining", DriverStation.getMatchTime());
+        LoggingManager.logAndSendValue("Time Remaining", DriverStation.getMatchTime());
 
         if(TelemetryConstants.debugTelemetry) {
             SmartDashboard.putNumber("velocity", Math.hypot(

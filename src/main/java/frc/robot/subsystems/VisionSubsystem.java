@@ -7,10 +7,10 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.networktables.NetworkTable;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.LimelightHelpers;
 import frc.robot.LimelightHelpers.RawFiducial;
+import frc.robot.commands.LoggingManager;
 import frc.robot.constants.VisionConstants.ApriltagConstants;
 
 public class VisionSubsystem extends SubsystemBase {
@@ -24,15 +24,15 @@ public class VisionSubsystem extends SubsystemBase {
     
     setPipeline(1);
     if(hasUSBCam)
-      NetworkTableInstance.getDefault().getTable(ll_name).getEntry("stream").setNumber(2); //usb camera as main and limelight as PiP
+      setPiP();
   }
 
   @Override
   public void periodic() {
     if(getCurrentCommand() == null)
-        SmartDashboard.putString(ll_name + " RunningCommand", "None");
+        LoggingManager.logAndAutoSendValue(ll_name + " RunningCommand", "None");
     else
-        SmartDashboard.putString(ll_name + " RunningCommand", getCurrentCommand().getName());
+        LoggingManager.logAndAutoSendValue(ll_name + " RunningCommand", getCurrentCommand().getName());
   }
 
   public LimelightHelpers.PoseEstimate getLLHPoseEstimate(double yaw, double yawRate) {
@@ -158,4 +158,8 @@ public class VisionSubsystem extends SubsystemBase {
   public enum ReefPosition {
     LEFT, MIDDLE, RIGHT
   }  
+
+  public void setPiP() {
+    NetworkTableInstance.getDefault().getTable(ll_name).getEntry("stream").setNumber(2); //usb camera as main and limelight as PiP
+  }
 }

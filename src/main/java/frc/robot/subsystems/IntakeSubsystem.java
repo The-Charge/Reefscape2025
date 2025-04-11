@@ -9,6 +9,7 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.commands.LoggingManager;
 import frc.robot.constants.HeadConstants;
 import frc.robot.constants.IntakeConstants;
 import frc.robot.constants.TelemetryConstants;
@@ -28,12 +29,12 @@ public class IntakeSubsystem extends SubsystemBase {
     @Override
     public void periodic() {
         if(getCurrentCommand() == null)
-            SmartDashboard.putString("Intake RunningCommand", "None");
+            LoggingManager.logAndAutoSendValue("Intake RunningCommand", "None");
         else
-            SmartDashboard.putString("Intake RunningCommand", getCurrentCommand().getName());
+            LoggingManager.logAndAutoSendValue("Intake RunningCommand", getCurrentCommand().getName());
         
-        SmartDashboard.putNumber("Intake Velocity", belt.getEncoder().getVelocity());
-        SmartDashboard.putNumber("Intake Current", belt.getOutputCurrent());
+        LoggingManager.logAndAutoSendValue("Intake Velocity", belt.getEncoder().getVelocity());
+        LoggingManager.logAndAutoSendValue("Intake Current", belt.getOutputCurrent());
 
         if(TelemetryConstants.debugTelemetry) {
             SmartDashboard.putNumber("Intake VBus", belt.get());

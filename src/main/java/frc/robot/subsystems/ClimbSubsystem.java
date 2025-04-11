@@ -11,9 +11,13 @@ import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.commands.LoggingManager;
 import frc.robot.constants.ClimbConstants;
 import frc.robot.constants.TelemetryConstants;
 import swervelib.parser.PIDFConfig;
@@ -53,14 +57,16 @@ public class ClimbSubsystem extends SubsystemBase {
         clampTargetCheck();
 
         if(getCurrentCommand() == null)
-            SmartDashboard.putString("Climb RunningCommand", "None");
+            LoggingManager.logAndAutoSendValue("Climb RunningCommand", "None");
         else
-            SmartDashboard.putString("Climb RunningCommand", getCurrentCommand().getName());
+            LoggingManager.logAndAutoSendValue("Climb RunningCommand", getCurrentCommand().getName());
         
-        SmartDashboard.putNumber("Climb Lever Ang (Ticks)", getLeverTicks());
-        SmartDashboard.putNumber("Climb Lever Ang (Deg)", getLeverDegrees());
-        SmartDashboard.putNumber("Climb Lever VBus", lever.get());
-        SmartDashboard.putNumber("Climb Lever Current", lever.getStatorCurrent().getValueAsDouble());
+        LoggingManager.logAndAutoSendValue("Climb Lever Ang (Ticks)", getLeverTicks());
+        LoggingManager.logAndAutoSendValue("Climb Lever Ang (Deg)", getLeverDegrees());
+        LoggingManager.logAndAutoSendValue("Climb Lever VBus", lever.get());
+        LoggingManager.logAndAutoSendValue("Climb Lever Current", lever.getStatorCurrent().getValueAsDouble());
+        LoggingManager.logValue("LeverPose", Pose3d.struct, new Pose3d(Translation3d.kZero, new Rotation3d(0, getLeverDegrees() * Math.PI / 180, 0)), true);
+        LoggingManager.logValue("ClampPose", Pose3d.struct, new Pose3d(Translation3d.kZero, new Rotation3d(0, 0, -getClampDegrees() * Math.PI / 180)), true);
 
         if(TelemetryConstants.debugTelemetry) {
             SmartDashboard.putString("Climb Lever Ang (STA)", getLeverState().name());

@@ -7,7 +7,7 @@
         {
           "type": "path",
           "data": {
-            "pathName": "OOOOOOOOOOOOOOOOOOOOOOOOOOOO"
+            "pathName": "MidStart-MidBack"
           }
         },
         {
@@ -45,6 +45,18 @@
           "type": "named",
           "data": {
             "name": "HeadShoot"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "MidBack-MoveBack"
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "ElevHome"
           }
         }
       ]

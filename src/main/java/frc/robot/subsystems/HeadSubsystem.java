@@ -10,6 +10,7 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.commands.LoggingManager;
 import frc.robot.constants.HeadConstants;
 import frc.robot.constants.TelemetryConstants;
 
@@ -50,18 +51,18 @@ public class HeadSubsystem extends SubsystemBase {
         hasCoral = getCoralSensor();
 
         if(getCurrentCommand() == null)
-            SmartDashboard.putString("Head RunningCommand", "None");
+            LoggingManager.logAndAutoSendValue("Head RunningCommand", "None");
         else
-            SmartDashboard.putString("Head RunningCommand", getCurrentCommand().getName());
+            LoggingManager.logAndAutoSendValue("Head RunningCommand", getCurrentCommand().getName());
         
-        SmartDashboard.putBoolean("Head HasCoral", getHasCoral());
-        SmartDashboard.putNumber("Head Branch Sensor (mm)", branchSensor.getRange());
-        SmartDashboard.putNumber("Head Branch Sensor (sigma)", branchSensor.getRangeSigma());
-        SmartDashboard.putNumber("Head Back Sensor (mm)", backSensor.getRange());
-        SmartDashboard.putNumber("Head Front Sensor (mm)", frontSensor.getRange());
-        SmartDashboard.putBoolean("Head Branch Sensor LVL2 (Bool)", getBranchSensor(ElevSubsystem.Level.LVL2));
-        SmartDashboard.putBoolean("Head Branch Sensor LVL3 (Bool)", getBranchSensor(ElevSubsystem.Level.LVL3));
-        SmartDashboard.putBoolean("Head Branch Sensor LVL4 (Bool)", getBranchSensor(ElevSubsystem.Level.LVL4));
+        LoggingManager.logAndAutoSendValue("Head HasCoral", getHasCoral());
+        LoggingManager.logAndAutoSendValue("Head Branch Sensor (mm)", branchSensor.getRange());
+        LoggingManager.logAndAutoSendValue("Head Branch Sensor (sigma)", branchSensor.getRangeSigma());
+        LoggingManager.logAndAutoSendValue("Head Back Sensor (mm)", backSensor.getRange());
+        LoggingManager.logAndAutoSendValue("Head Front Sensor (mm)", frontSensor.getRange());
+        LoggingManager.logAndAutoSendValue("Head Branch Sensor LVL2 (Bool)", getBranchSensor(ElevSubsystem.Level.LVL2));
+        LoggingManager.logAndAutoSendValue("Head Branch Sensor LVL3 (Bool)", getBranchSensor(ElevSubsystem.Level.LVL3));
+        LoggingManager.logAndAutoSendValue("Head Branch Sensor LVL4 (Bool)", getBranchSensor(ElevSubsystem.Level.LVL4));
 
         if(TelemetryConstants.debugTelemetry) {
             SmartDashboard.putNumber("Head VBus L", headLeft.get());
@@ -100,7 +101,7 @@ public class HeadSubsystem extends SubsystemBase {
                 return branchSensor.getRange() <= HeadConstants.branchLVL2ActivationDist 
                         && branchSensor.getRangeSigma() < HeadConstants.branchSigmaActivation;
             default:
-                return false;
+                return true;
         }
     }
 

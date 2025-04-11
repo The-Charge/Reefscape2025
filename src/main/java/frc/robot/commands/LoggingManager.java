@@ -1,77 +1,321 @@
 package frc.robot.commands;
 
-import edu.wpi.first.math.geometry.Pose2d;
+import java.util.HashMap;
+
 import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Translation3d;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StructArrayPublisher;
-import edu.wpi.first.networktables.StructPublisher;
-import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.subsystems.ClimbSubsystem;
-import frc.robot.subsystems.ElevSubsystem;
-import frc.robot.subsystems.SwerveSubsystem;
-import frc.robot.subsystems.VisionSubsystem;
+import edu.wpi.first.util.datalog.BooleanLogEntry;
+import edu.wpi.first.util.datalog.DoubleLogEntry;
+import edu.wpi.first.util.datalog.IntegerLogEntry;
+import edu.wpi.first.util.datalog.StringLogEntry;
+import edu.wpi.first.util.datalog.StructArrayLogEntry;
+import edu.wpi.first.util.datalog.StructLogEntry;
+import edu.wpi.first.util.struct.Struct;
+import edu.wpi.first.wpilibj.DataLogManager;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import frc.robot.constants.TelemetryConstants;
 
-public class LoggingManager extends Command {
+public abstract class LoggingManager {
     
-    private final SwerveSubsystem swerve;
-    private final VisionSubsystem reef;
-    private final VisionSubsystem funnel;
-    private final ElevSubsystem elev;
-    private final ClimbSubsystem climb;
+    private static final HashMap<String, BooleanLogEntry> boolEntries;
+    private static final HashMap<String, DoubleLogEntry> doubleEntries;
+    @SuppressWarnings("rawtypes")
+    private static final HashMap<String, StructLogEntry> structEntries; //use raw types because generics suck
+    @SuppressWarnings("rawtypes")
+    private static final HashMap<String, StructArrayLogEntry> structArrayEntries;
+    private static final HashMap<String, StringLogEntry> stringEntries;
+    private static final HashMap<String, IntegerLogEntry> intEntries;
 
-    private final StructPublisher<Pose2d> posePublisher;
-    private final StructArrayPublisher<Pose3d> reefTagPublisher;
-    private final StructArrayPublisher<Pose3d> funnelTagPublisher;
-    private final StructPublisher<Pose3d> elevPublisher;
-    private final StructPublisher<Pose3d> leverPublisher;
-    private final StructPublisher<Pose3d> clampPublisher;
-    private final StructPublisher<Pose3d> bumperPublisher;
+    static {
+        boolEntries = new HashMap<>();
+        doubleEntries = new HashMap<>();
+        structEntries = new HashMap<>();
+        structArrayEntries = new HashMap<>();
+        stringEntries = new HashMap<>();
+        intEntries = new HashMap<>();
+
+        logValue("BumperPose", Pose3d.struct, Pose3d.kZero); //one time, needed for 3D field view
+    }
 
     /**
-     * Note: Doesn't require any subsystems, just needs them for querying data
+     * Logs a value to the on-robot log file. Note that the key automatically has "/AvScope/" appended to the beginning
      */
-    public LoggingManager(SwerveSubsystem swerveSub, VisionSubsystem reefSub, VisionSubsystem funnelSub, ElevSubsystem elevSub, ClimbSubsystem climbSub) {
-        swerve = swerveSub;
-        reef = reefSub;
-        funnel = funnelSub;
-        elev = elevSub;
-        climb = climbSub;
-
-        //I never close these because they should only be closed when the robot is turned off, and any memory leaks will be deleted by RAM shutting down
-        posePublisher = NetworkTableInstance.getDefault().getStructTopic("AvScope/SwervePose", Pose2d.struct).publish();
-        reefTagPublisher = NetworkTableInstance.getDefault().getStructArrayTopic("AvScope/ReefTags", Pose3d.struct).publish();
-        funnelTagPublisher = NetworkTableInstance.getDefault().getStructArrayTopic("AvScope/FunnelTags", Pose3d.struct).publish();
-        elevPublisher = NetworkTableInstance.getDefault().getStructTopic("AvScope/ElevPose", Pose3d.struct).publish();
-        leverPublisher = NetworkTableInstance.getDefault().getStructTopic("AvScope/LeverPose", Pose3d.struct).publish();
-        clampPublisher = NetworkTableInstance.getDefault().getStructTopic("AvScope/ClampPose", Pose3d.struct).publish();
-        bumperPublisher = NetworkTableInstance.getDefault().getStructTopic("AvScope/BumperPose", Pose3d.struct).publish();
+    public static void logValue(String key, boolean val) {
+        logValue(key, val, true);
+    }
+    /**
+     * Logs a value to the on-robot log file. Note that the key automatically has "/AvScope/" appended to the beginning
+     */
+    public static void logValue(String key, double val) {
+        logValue(key, val, true);
+    }
+    /**
+     * Logs a value to the on-robot log file. Note that the key automatically has "/AvScope/" appended to the beginning
+     */
+    public static <T> void logValue(String key, Struct<T> struct, T val) {
+        logValue(key, struct, val, true);
+    }
+    /**
+     * Logs a value to the on-robot log file. Note that the key automatically has "/AvScope/" appended to the beginning
+     */
+    public static <T> void logValue(String key, Struct<T> struct, T[] vals) {
+        logValue(key, struct, vals, true);
+    }
+    /**
+     * Logs a value to the on-robot log file. Note that the key automatically has "/AvScope/" appended to the beginning
+     */
+    public static void logValue(String key, String val) {
+        logValue(key, val, true);
+    }
+    /**
+     * Logs a value to the on-robot log file. Note that the key automatically has "/AvScope/" appended to the beginning
+     */
+    public static void logValue(String key, int val) {
+        logValue(key, val, true);
     }
 
-    @Override
-    public void initialize() {
-        bumperPublisher.set(Pose3d.kZero);
-    }
-    @Override
-    public void execute() {
-        posePublisher.set(swerve.getPose());
-        
-        reefTagPublisher.set(reef.getTagPose3ds());
-        funnelTagPublisher.set(funnel.getTagPose3ds());
+    /**
+     * Logs a value to the on-robot log file. Note that the key automatically has "/AvScope/" appended to the beginning
+     */
+    public static void logValue(String key, boolean val, boolean ignoreRepeats) {
+        if(DataLogManager.getLogDir().isEmpty()) {
+            DriverStation.reportWarning("Attempted to log to file before logging has started", false);
+            return;
+        }
 
-        elevPublisher.set(new Pose3d(new Translation3d(0, 0, elev.getPositionInches() / 39.37), Rotation3d.kZero));
+        String newKey = "/AvScope/" + key; //unsafe, I don't care
 
-        leverPublisher.set(new Pose3d(Translation3d.kZero, new Rotation3d(0, climb.getLeverDegrees() * Math.PI / 180, 0)));
-        clampPublisher.set(new Pose3d(Translation3d.kZero, new Rotation3d(0, 0, -climb.getClampDegrees() * Math.PI / 180)));
+        if(!boolEntries.containsKey(newKey)) {
+            BooleanLogEntry entry = new BooleanLogEntry(DataLogManager.getLog(), newKey);
+            entry.update(val); //no chance of repeat value but still need to use update rather than append in order to update last value
+
+            boolEntries.put(newKey, entry);
+            return;
+        }
+
+        BooleanLogEntry entry = boolEntries.get(newKey);
+        if(ignoreRepeats) {
+            entry.update(val); //update will check if the values has changed before logging
+            return;
+        }
+        entry.append(val);
+    }
+    /**
+     * Logs a value to the on-robot log file. Note that the key automatically has "/AvScope/" appended to the beginning
+     */
+    public static void logValue(String key, double val, boolean ignoreRepeats) {
+        if(DataLogManager.getLogDir().isEmpty()) {
+            DriverStation.reportWarning("Attempted to log to file before logging has started", false);
+            return;
+        }
+
+        String newKey = "/AvScope/" + key; //unsafe, I don't care
+
+        if(!doubleEntries.containsKey(newKey)) {
+            DoubleLogEntry entry = new DoubleLogEntry(DataLogManager.getLog(), newKey);
+            entry.update(val); //no chance of repeat value but still need to use update rather than append in order to update last value
+
+            doubleEntries.put(newKey, entry);
+            return;
+        }
+
+        DoubleLogEntry entry = doubleEntries.get(newKey);
+        if(ignoreRepeats) {
+            entry.update(val); //update will check if the values has changed before logging
+            return;
+        }
+        entry.append(val);
+    }
+    /**
+     * Logs a value to the on-robot log file. Note that the key automatically has "/AvScope/" appended to the beginning
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> void logValue(String key, Struct<T> struct, T val, boolean ignoreRepeats) {
+        if(DataLogManager.getLogDir().isEmpty()) {
+            DriverStation.reportWarning("Attempted to log to file before logging has started", false);
+            return;
+        }
+
+        String newKey = "/AvScope/" + key; //unsafe, I don't care
+
+        if(!structEntries.containsKey(newKey)) {
+            StructLogEntry<T> entry = StructLogEntry.create(DataLogManager.getLog(), newKey, struct);
+            entry.update(val); //no chance of repeat value but still need to use update rather than append in order to update last value
+
+            structEntries.put(newKey, entry);
+            return;
+        }
+
+        //don't know if a try catch will even work, doing it anyways
+        try {
+            StructLogEntry entry = structEntries.get(newKey);
+            if(ignoreRepeats) {
+                entry.update(val); //update will check if the values has changed before logging
+                return;
+            }
+            entry.append(val);
+        }
+        catch(Exception e) {
+            DriverStation.reportError("Raw type exception in logValue of Struct", e.getStackTrace());
+        }
+    }
+    /**
+     * Logs a value to the on-robot log file. Note that the key automatically has "/AvScope/" appended to the beginning
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> void logValue(String key, Struct<T> struct, T[] vals, boolean ignoreRepeats) {
+        if(DataLogManager.getLogDir().isEmpty()) {
+            DriverStation.reportWarning("Attempted to log to file before logging has started", false);
+            return;
+        }
+
+        String newKey = "/AvScope/" + key; //unsafe, I don't care
+
+        if(!structArrayEntries.containsKey(newKey)) {
+            StructArrayLogEntry<T> entry = StructArrayLogEntry.create(DataLogManager.getLog(), newKey, struct);
+            entry.update(vals); //no chance of repeat value but still need to use update rather than append in order to update last value
+
+            structArrayEntries.put(newKey, entry);
+            return;
+        }
+
+        //don't know if a try catch will even work, doing it anyways
+        try {
+            StructArrayLogEntry entry = structArrayEntries.get(newKey);
+            if(ignoreRepeats) {
+                entry.update(vals); //update will check if the values has changed before logging
+                return;
+            }
+            entry.append(vals);
+        }
+        catch(Exception e) {
+            DriverStation.reportError("Raw type exception in logValue of StructArray", e.getStackTrace());
+        }
+    }
+    /**
+     * Logs a value to the on-robot log file. Note that the key automatically has "/AvScope/" appended to the beginning
+     */
+    public static void logValue(String key, String val, boolean ignoreRepeats) {
+        if(DataLogManager.getLogDir().isEmpty()) {
+            DriverStation.reportWarning("Attempted to log to file before logging has started", false);
+            return;
+        }
+
+        String newKey = "/AvScope/" + key; //unsafe, I don't care
+
+        if(!stringEntries.containsKey(newKey)) {
+            StringLogEntry entry = new StringLogEntry(DataLogManager.getLog(), newKey);
+            entry.update(val); //no chance of repeat value but still need to use update rather than append in order to update last value
+
+            stringEntries.put(newKey, entry);
+            return;
+        }
+
+        StringLogEntry entry = stringEntries.get(newKey);
+        if(ignoreRepeats) {
+            entry.update(val); //update will check if the values has changed before logging
+            return;
+        }
+        entry.append(val);
+    }
+    /**
+     * Logs a value to the on-robot log file. Note that the key automatically has "/AvScope/" appended to the beginning
+     */
+    public static void logValue(String key, int val, boolean ignoreRepeats) {
+        if(DataLogManager.getLogDir().isEmpty()) {
+            DriverStation.reportWarning("Attempted to log to file before logging has started", false);
+            return;
+        }
+
+        String newKey = "/AvScope/" + key; //unsafe, I don't care
+
+        if(!intEntries.containsKey(newKey)) {
+            IntegerLogEntry entry = new IntegerLogEntry(DataLogManager.getLog(), newKey);
+            entry.update(val); //no chance of repeat value but still need to use update rather than append in order to update last value
+
+            intEntries.put(newKey, entry);
+            return;
+        }
+
+        IntegerLogEntry entry = intEntries.get(newKey);
+        if(ignoreRepeats) {
+            entry.update(val); //update will check if the values has changed before logging
+            return;
+        }
+        entry.append(val);
     }
 
-    @Override
-    public boolean isFinished() {
-        return false;
+    /**
+     * Logs a value to the on-robot log file and sends it to the network tables
+     */
+    public static void logAndSendValue(String key, boolean val) {
+        SmartDashboard.putBoolean(key, val);
+        logValue(key, val);
     }
-    @Override
-    public boolean runsWhenDisabled() {
-        return true;
+    /**
+     * Logs a value to the on-robot log file and sends it to the network tables
+     */
+    public static void logAndSendValue(String key, double val) {
+        SmartDashboard.putNumber(key, val);
+        logValue(key, val);
+    }
+    /**
+     * Logs a value to the on-robot log file and sends it to the network tables
+     */
+    public static void logAndSendValue(String key, String val) {
+        SmartDashboard.putString(key, val);
+        logValue(key, val);
+    }
+    /**
+     * Logs a value to the on-robot log file and sends it to the network tables
+     */
+    public static void logAndSendValue(String key, int val) {
+        SmartDashboard.putNumber(key, val);
+        logValue(key, val);
+    }
+
+    /**
+     * Logs a value to the on-robot log file and sends it to the network tables if {@link frc.robot.constants.TelemetryConstants#debugTelemetry TelemetryConstants.debugTelemetry} is true
+     */
+    public static void logAndAutoSendValue(String key, boolean val) {
+        if(TelemetryConstants.debugTelemetry) {
+            logAndSendValue(key, val);
+            return;
+        }
+
+        logValue(key, val);
+    }
+    /**
+     * Logs a value to the on-robot log file and sends it to the network tables if {@link frc.robot.constants.TelemetryConstants#debugTelemetry TelemetryConstants.debugTelemetry} is true
+     */
+    public static void logAndAutoSendValue(String key, double val) {
+        if(TelemetryConstants.debugTelemetry) {
+            logAndSendValue(key, val);
+            return;
+        }
+
+        logValue(key, val);
+    }
+    /**
+     * Logs a value to the on-robot log file and sends it to the network tables if {@link frc.robot.constants.TelemetryConstants#debugTelemetry TelemetryConstants.debugTelemetry} is true
+     */
+    public static void logAndAutoSendValue(String key, String val) {
+        if(TelemetryConstants.debugTelemetry) {
+            logAndSendValue(key, val);
+            return;
+        }
+
+        logValue(key, val);
+    }
+    /**
+     * Logs a value to the on-robot log file and sends it to the network tables if {@link frc.robot.constants.TelemetryConstants#debugTelemetry TelemetryConstants.debugTelemetry} is true
+     */
+    public static void logAndAutoSendValue(String key, int val) {
+        if(TelemetryConstants.debugTelemetry) {
+            logAndSendValue(key, val);
+            return;
+        }
+
+        logValue(key, val);
     }
 }

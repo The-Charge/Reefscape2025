@@ -28,19 +28,6 @@
             }
           },
           {
-            "title": "Auto Chooser",
-            "x": 0.0,
-            "y": 576.0,
-            "width": 640.0,
-            "height": 128.0,
-            "type": "ComboBox Chooser",
-            "properties": {
-              "topic": "/SmartDashboard/Auto Chooser",
-              "period": 0.06,
-              "sort_options": false
-            }
-          },
-          {
             "title": "Time Remaining",
             "x": 0.0,
             "y": 320.0,
@@ -77,8 +64,8 @@
             "title": "limelight-funnel",
             "x": 640.0,
             "y": 0.0,
-            "width": 384.0,
-            "height": 320.0,
+            "width": 512.0,
+            "height": 448.0,
             "type": "Camera Stream",
             "properties": {
               "topic": "/CameraPublisher/limelight-funnel",
@@ -88,15 +75,71 @@
           },
           {
             "title": "limelight-reef",
-            "x": 640.0,
-            "y": 320.0,
-            "width": 512.0,
-            "height": 384.0,
+            "x": 1152.0,
+            "y": 0.0,
+            "width": 384.0,
+            "height": 320.0,
             "type": "Camera Stream",
             "properties": {
               "topic": "/CameraPublisher/limelight-reef",
               "period": 0.06,
               "rotation_turns": 0
+            }
+          },
+          {
+            "title": "Lined Up",
+            "x": 1152.0,
+            "y": 320.0,
+            "width": 384.0,
+            "height": 256.0,
+            "type": "Boolean Box",
+            "properties": {
+              "topic": "/SmartDashboard/Head Branch Sensor LVL4 (Bool)",
+              "period": 0.06,
+              "data_type": "boolean",
+              "true_color": 4283215696,
+              "false_color": 4294198070,
+              "true_icon": "None",
+              "false_icon": "None"
+            }
+          },
+          {
+            "title": "Auto Chooser",
+            "x": 640.0,
+            "y": 448.0,
+            "width": 512.0,
+            "height": 128.0,
+            "type": "ComboBox Chooser",
+            "properties": {
+              "topic": "/SmartDashboard/Auto Chooser",
+              "period": 0.06,
+              "sort_options": false
+            }
+          },
+          {
+            "title": "Reset Reef PiP",
+            "x": 1152.0,
+            "y": 576.0,
+            "width": 384.0,
+            "height": 128.0,
+            "type": "Command",
+            "properties": {
+              "topic": "/SmartDashboard/Reset Reef PiP",
+              "period": 0.06,
+              "show_type": false
+            }
+          },
+          {
+            "title": "Reset Funnel PiP",
+            "x": 640.0,
+            "y": 576.0,
+            "width": 512.0,
+            "height": 128.0,
+            "type": "Command",
+            "properties": {
+              "topic": "/SmartDashboard/Reset Funnel PiP",
+              "period": 0.06,
+              "show_type": false
             }
           }
         ]
@@ -956,23 +999,6 @@
             }
           },
           {
-            "title": "Head Branch Sensor (Bool)",
-            "x": 512.0,
-            "y": 128.0,
-            "width": 128.0,
-            "height": 128.0,
-            "type": "Boolean Box",
-            "properties": {
-              "topic": "/SmartDashboard/Head Branch Sensor (Bool)",
-              "period": 0.06,
-              "data_type": "boolean",
-              "true_color": 4283215696,
-              "false_color": 4294198070,
-              "true_icon": "None",
-              "false_icon": "None"
-            }
-          },
-          {
             "title": "Head Branch Sensor (mm)",
             "x": 512.0,
             "y": 0.0,
@@ -1082,6 +1108,85 @@
               "topic": "/SmartDashboard/AlgaeRem RunningCommand",
               "period": 0.06,
               "data_type": "string",
+              "show_submit_button": false
+            }
+          },
+          {
+            "title": "Head Branch Sensor (sigma)",
+            "x": 1088.0,
+            "y": 320.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/Head Branch Sensor (sigma)",
+              "period": 0.06,
+              "data_type": "double",
+              "show_submit_button": false
+            }
+          },
+          {
+            "title": "Head Branch Sensor LVL2 (Bool)",
+            "x": 704.0,
+            "y": 320.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Boolean Box",
+            "properties": {
+              "topic": "/SmartDashboard/Head Branch Sensor LVL2 (Bool)",
+              "period": 0.06,
+              "data_type": "boolean",
+              "true_color": 4283215696,
+              "false_color": 4294198070,
+              "true_icon": "None",
+              "false_icon": "None"
+            }
+          },
+          {
+            "title": "Head Branch Sensor LVL3 (Bool)",
+            "x": 832.0,
+            "y": 320.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Boolean Box",
+            "properties": {
+              "topic": "/SmartDashboard/Head Branch Sensor LVL3 (Bool)",
+              "period": 0.06,
+              "data_type": "boolean",
+              "true_color": 4283215696,
+              "false_color": 4294198070,
+              "true_icon": "None",
+              "false_icon": "None"
+            }
+          },
+          {
+            "title": "Head Branch Sensor LVL4 (Bool)",
+            "x": 960.0,
+            "y": 320.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Boolean Box",
+            "properties": {
+              "topic": "/SmartDashboard/Head Branch Sensor LVL4 (Bool)",
+              "period": 0.06,
+              "data_type": "boolean",
+              "true_color": 4283215696,
+              "false_color": 4294198070,
+              "true_icon": "None",
+              "false_icon": "None"
+            }
+          },
+          {
+            "title": "Head Front Sensor (mm)",
+            "x": 1216.0,
+            "y": 576.0,
+            "width": 128.0,
+            "height": 128.0,
+            "type": "Text Display",
+            "properties": {
+              "topic": "/SmartDashboard/Head Front Sensor (mm)",
+              "period": 0.06,
+              "data_type": "double",
               "show_submit_button": false
             }
           }

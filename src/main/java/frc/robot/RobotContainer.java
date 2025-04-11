@@ -14,13 +14,13 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Filesystem;
-import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Command.InterruptionBehavior;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
@@ -35,6 +35,8 @@ import frc.robot.commands.climb.Climb;
 import frc.robot.commands.climb.ClimbClampDegreesManual;
 import frc.robot.commands.climb.ClimbLeverDegreesManual;
 import frc.robot.commands.climb.Declimb;
+import frc.robot.commands.elev.AdjustL4Override;
+import frc.robot.commands.elev.ElevManualUp;
 import frc.robot.commands.elev.MoveToInchesManual;
 import frc.robot.commands.elev.MoveToLevel;
 import frc.robot.commands.elev.MoveToLevelManual;
@@ -47,6 +49,7 @@ import frc.robot.commands.intake.ManualIntake;
 import frc.robot.commands.intake.WaitForIntakeCoral;
 import frc.robot.commands.leds.LEDManager;
 import frc.robot.commands.swervedrive.drivebase.AlignToBranch;
+import frc.robot.commands.swervedrive.drivebase.DriveSlow;
 import frc.robot.commands.swervedrive.drivebase.DriveToReefDist;
 import frc.robot.commands.swervedrive.drivebase.DriveToSourceDist;
 import frc.robot.commands.swervedrive.drivebase.SwerveZero;
@@ -54,6 +57,7 @@ import frc.robot.commands.swervedrive.drivebase.TeleopDrive;
 import frc.robot.commands.vision.AlignToTag;
 import frc.robot.commands.vision.DriveToTag;
 import frc.robot.commands.vision.LimelightManager;
+import frc.robot.commands.vision.ResetLLPiP;
 import frc.robot.constants.ClimbConstants;
 import frc.robot.constants.SwerveConstants;
 import frc.robot.constants.TelemetryConstants;
@@ -94,11 +98,8 @@ public class RobotContainer {
     private SendableChooser<Command> autoChooser;
     private TeleopDrive teleopDrive;
     private LEDManager ledManager;
-    private LoggingManager logging;
     
     public RobotContainer() {
-        logging = new LoggingManager(swerve, reeflimelight, funnellimelight, elev, climb);
-
         driver1 = new CommandXboxController(0);
         driver2 = new CommandXboxController(1);
         hid1 = driver1.getHID(); //use hid objects to reduce performance impact. Using getBoolean() on the trigger from CommandXboxController causes large CPU usage
@@ -141,16 +142,20 @@ public class RobotContainer {
 
         driver1.a().whileTrue(new AlignToTag(swerve, reeflimelight, ReefPosition.RIGHT));
         
-        driver1.rightBumper().onTrue(new DriveToTag(swerve, true,
-                () -> (Math.abs(driver1.getLeftX()) < SwerveConstants.LEFT_X_DEADBAND
-                        && Math.abs(driver1.getLeftY()) < SwerveConstants.LEFT_Y_DEADBAND
-                        && Math.abs(driver1.getRightX()) < SwerveConstants.RIGHT_X_DEADBAND),
-                ReefPosition.RIGHT)); // Drive to closest tag
-        driver1.leftBumper().onTrue(new DriveToTag(swerve, true,
-                () -> (Math.abs(driver1.getLeftX()) < SwerveConstants.LEFT_X_DEADBAND
-                        && Math.abs(driver1.getLeftY()) < SwerveConstants.LEFT_Y_DEADBAND
-                        && Math.abs(driver1.getRightX()) < SwerveConstants.RIGHT_X_DEADBAND),
-                ReefPosition.LEFT));
+        // driver1.rightBumper().onTrue(new DriveToTag(swerve, true,
+        //         () -> (Math.abs(driver1.getLeftX()) < SwerveConstants.LEFT_X_DEADBAND
+        //                 && Math.abs(driver1.getLeftY()) < SwerveConstants.LEFT_Y_DEADBAND
+        //                 && Math.abs(driver1.getRightX()) < SwerveConstants.RIGHT_X_DEADBAND),
+        //         ReefPosition.RIGHT)); // Drive to closest tag
+        // driver1.leftBumper().onTrue(new DriveToTag(swerve, true,
+        //         () -> (Math.abs(driver1.getLeftX()) < SwerveConstants.LEFT_X_DEADBAND
+        //                 && Math.abs(driver1.getLeftY()) < SwerveConstants.LEFT_Y_DEADBAND
+        //                 && Math.abs(driver1.getRightX()) < SwerveConstants.RIGHT_X_DEADBAND),
+        //         ReefPosition.LEFT));
+        // driver1.rightBumper().whileTrue(new AlignToBranch(swerve, head, elev, true));
+        // driver1.leftBumper().whileTrue(new AlignToBranch(swerve, head, elev, false));
+        driver1.rightBumper().whileTrue(new DriveSlow(swerve, true));
+        driver1.leftBumper().whileTrue(new DriveSlow(swerve, false));
         driver1.y().onTrue(new DriveToTag(swerve, false,
                 () -> (Math.abs(driver1.getLeftX()) < SwerveConstants.LEFT_X_DEADBAND
                         && Math.abs(driver1.getLeftY()) < SwerveConstants.LEFT_Y_DEADBAND
@@ -182,6 +187,9 @@ public class RobotContainer {
             new MoveToLevel(elev, head, Level.ALGAE_LOW, true),
             new AlgaeRemSpin(algaeRem, false)
         ));
+        new Trigger(() -> hid2.getRightY() < -SwerveConstants.RIGHT_Y_DEADBAND && elev.getPositionLevel() == ElevSubsystem.Level.LVL4).whileTrue(new AdjustL4Override(elev, 0.025));
+        new Trigger(() -> hid2.getRightY() > SwerveConstants.RIGHT_Y_DEADBAND && elev.getPositionLevel() == ElevSubsystem.Level.LVL4).whileTrue(new AdjustL4Override(elev, -0.025));
+        driver2.start().whileTrue(new ElevManualUp(elev).withInterruptBehavior(InterruptionBehavior.kCancelIncoming));
     }
     private void configureNamedCommands() {
         //Pathplanner named commands
@@ -211,6 +219,9 @@ public class RobotContainer {
         NamedCommands.registerCommand("AlgaeRemSpin", new AlgaeRemSpin(algaeRem, true));
     }
     private void addTelemetry() {
+        SmartDashboard.putData("Reset Reef PiP", new ResetLLPiP(reeflimelight));
+        SmartDashboard.putData("Reset Funnel PiP", new ResetLLPiP(funnellimelight));
+
         //one time telemetry values, such as dashboard commands
         if(TelemetryConstants.debugTelemetry) {
             SmartDashboard.putData("Swerve DriveToReefDist", new DriveToReefDist(swerve, head));
@@ -237,11 +248,21 @@ public class RobotContainer {
     private void setupAutoDisplay() {
         //update the displayed auto path in smartdashboard when ever the selection is changed
         //display is cleared in teleopInit
+        if(autoChooser.getSelected() != null)
+            LoggingManager.logValue("SelectedAuto", autoChooser.getSelected().getName());
+        else
+            LoggingManager.logValue("SelectedAuto", "Null");
+        
         autoChooser.onChange((selected) -> {
             if(DriverStation.isTeleopEnabled()) //don't display auton path in teleop
                 return;
 
             displayAuto();
+
+            if(autoChooser.getSelected() != null)
+                LoggingManager.logValue("SelectedAuto", autoChooser.getSelected().getName());
+            else
+                LoggingManager.logValue("SelectedAuto", "Null");
         });
 
         /*
@@ -288,6 +309,9 @@ public class RobotContainer {
         new LimelightManager(swerve, reeflimelight, funnellimelight).schedule();
     }
     public void scheduleLimelightAuton() {
+        if(SwerveConstants.autonVisionTime == 0)
+            return;
+
         new ParallelRaceGroup(
             new LimelightManager(swerve, reeflimelight, funnellimelight),
             new WaitCommand(SwerveConstants.autonVisionTime)
@@ -303,12 +327,7 @@ public class RobotContainer {
     public LEDManager getLEDManager() {
         return ledManager;
     }
-    public void scheduleLoggingManager() {
-        if(!logging.isScheduled())
-            logging.schedule();
-    }
-    public void cancelLoggingManager() {
-        if(logging.isScheduled())
-            logging.cancel();
+    public ElevSubsystem getElev() {
+        return elev;
     }
 }

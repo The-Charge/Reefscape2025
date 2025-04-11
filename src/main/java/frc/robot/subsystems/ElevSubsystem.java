@@ -9,10 +9,14 @@ import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.ReverseLimitValue;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.commands.LoggingManager;
 import frc.robot.constants.ElevConstants;
 import frc.robot.constants.TelemetryConstants;
 
@@ -34,12 +38,14 @@ public class ElevSubsystem extends SubsystemBase {
     private int targetCounter = 0;
     private boolean isAtTarget = true;
     private SendableChooser<Level> targetOverrideLvl;
-    private boolean hardStopLast = true;
+    private boolean hardStopLast = false;
+    private double l4Override;
 
     public ElevSubsystem() {
         motor = new TalonFX(ElevConstants.motorID);
 
         configureMotor(motor);
+        resetL4Override(); //also called in robotInit
 
         if(TelemetryConstants.debugTelemetry) {
             //used for smartdashboard override commands, read only
@@ -67,13 +73,16 @@ public class ElevSubsystem extends SubsystemBase {
         targetCheck();
 
         if(getCurrentCommand() == null)
-            SmartDashboard.putString("Elev RunningCommand", "None");
+            LoggingManager.logAndAutoSendValue("Elev RunningCommand", "None");
         else
-            SmartDashboard.putString("Elev RunningCommand", getCurrentCommand().getName());
+            LoggingManager.logAndAutoSendValue("Elev RunningCommand", getCurrentCommand().getName());
         
-        SmartDashboard.putNumber("Elev Pos (In)", getPositionInches());
-        SmartDashboard.putBoolean("Elev isAtTarget", isAtTarget());
-        SmartDashboard.putBoolean("Elev HardStop", isAtHardStop());
+        LoggingManager.logAndAutoSendValue("Elev Pos (In)", getPositionInches());
+        LoggingManager.logAndAutoSendValue("Elev isAtTarget", isAtTarget());
+        LoggingManager.logAndAutoSendValue("Elev HardStop", isAtHardStop());
+        LoggingManager.logAndAutoSendValue("Elev L4 Override", l4Override);
+        LoggingManager.logAndAutoSendValue("Elev Appropriate L4 Height", getAppropriateL4Height());
+        LoggingManager.logValue("ElevPose", Pose3d.struct, new Pose3d(new Translation3d(0, 0, getPositionInches() / 39.37), Rotation3d.kZero), true);
 
         if(TelemetryConstants.debugTelemetry) {
             SmartDashboard.putString("Elev Pos (LVL)", getPositionLevel().name());
@@ -123,7 +132,8 @@ public class ElevSubsystem extends SubsystemBase {
             break;
 
             case LVL4:
-            val = ElevConstants.lvl4Inches;
+            // val = ElevConstants.lvl4Inches;
+            val = getAppropriateL4Height();
             break;
 
             case ALGAE_LOW:
@@ -148,6 +158,15 @@ public class ElevSubsystem extends SubsystemBase {
     public void setAsZero() {
         motor.setPosition(0);
     }
+    public void resetL4Override() {
+        l4Override = ElevConstants.lvl4InchesTele;
+    }
+    public void setL4Override(double inches) {
+        l4Override = inches;
+    }
+    public void setVbus(double pow) {
+        motor.set(pow);
+    }
 
     public double getPositionInches() {
         return getPositionTicks() * ElevConstants.tickToInConversion;
@@ -166,6 +185,15 @@ public class ElevSubsystem extends SubsystemBase {
     }
     public boolean isAtHardStop() {
         return motor.getReverseLimit().getValue() == ReverseLimitValue.ClosedToGround;
+    }
+    public double getL4Override() {
+        return l4Override;
+    }
+    public double getAppropriateL4Height() {
+        if(DriverStation.isAutonomous())
+            return ElevConstants.lvl4InchesAuto;
+        
+        return l4Override;
     }
 
     private void configureMotor(TalonFX m) {
@@ -216,7 +244,8 @@ public class ElevSubsystem extends SubsystemBase {
             return Level.LVL2;
         else if(Math.abs(inches - ElevConstants.lvl3Inches) <= ElevConstants.targetThresholdInches)
             return Level.LVL3;
-        else if(Math.abs(inches - ElevConstants.lvl4Inches) <= ElevConstants.targetThresholdInches)
+        // else if(Math.abs(inches - ElevConstants.lvl4Inches) <= ElevConstants.targetThresholdInches)
+        else if(Math.abs(inches - getAppropriateL4Height()) <= ElevConstants.targetThresholdInches)
             return Level.LVL4;
         else if(Math.abs(inches - ElevConstants.algaeLowInches) <= ElevConstants.targetThresholdInches)
             return Level.ALGAE_LOW;

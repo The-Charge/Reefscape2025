@@ -20,7 +20,7 @@ public abstract class HeadConstants {
     public static final double branchLVL3MinActivationDist = 375; //millimeters
     public static final double branchLVL3ActivationDist = 725; //millimeters
     public static final double branchLVL4ActivationDist = 400; //millimeters
-    public static final double branchSigmaActivation = 3; //millimeters
+    public static final double branchSigmaActivation = 5; //millimeters
     public static final boolean leftReversed = false;
     public static final boolean rightReversed = true;
 

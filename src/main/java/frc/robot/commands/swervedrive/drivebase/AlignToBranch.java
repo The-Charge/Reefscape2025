@@ -13,12 +13,23 @@ public class AlignToBranch extends Command {
     private final SwerveSubsystem swerve;
     private final HeadSubsystem head;
     private final ElevSubsystem elev;
+    private final boolean right;
     private Timer timeout;
 
     public AlignToBranch(SwerveSubsystem swerveSub, HeadSubsystem headSub, ElevSubsystem elevSub) {
         swerve = swerveSub;
         head = headSub;
         elev = elevSub;
+        right = true;
+
+        addRequirements(swerve);
+    }
+
+    public AlignToBranch(SwerveSubsystem swerveSub, HeadSubsystem headSub, ElevSubsystem elevSub, boolean rightBool) {
+        swerve = swerveSub;
+        head = headSub;
+        elev = elevSub;
+        right = rightBool;
 
         addRequirements(swerve);
     }
@@ -31,7 +42,7 @@ public class AlignToBranch extends Command {
 
     @Override
     public void execute() {
-        swerve.drive(new Translation2d(0, -SwerveConstants.branchAlignSpeed), 0, false);
+        swerve.drive(new Translation2d(0, SwerveConstants.branchAlignSpeed * (right ? -1 : 1)), 0, false);
     }
     @Override
     public void end(boolean interrupted) {

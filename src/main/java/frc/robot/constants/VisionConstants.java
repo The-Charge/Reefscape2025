@@ -22,7 +22,7 @@ public abstract class VisionConstants {
     public static final double Y_CAMERA_OFFSET = Units.inchesToMeters(5); //right
     public static final double Z_CAMERA_OFFSET = 0.28; //up
     public static final double ROLL_CAMERA_OFFSET = Units.degreesToRadians(0); //3 degree
-    public static final double YAW_CAMERA_OFFSET = Units.degreesToRadians(0);
+    public static final double YAW_CAMERA_OFFSET = Units.degreesToRadians(-6.5);
     public static final double PITCH_CAMERA_OFFSET = Units.degreesToRadians(0);
     public static final Pose3d CAMERA_OFFSET = new Pose3d(X_CAMERA_OFFSET, Y_CAMERA_OFFSET, Z_CAMERA_OFFSET, 
                                                new Rotation3d(ROLL_CAMERA_OFFSET, PITCH_CAMERA_OFFSET, YAW_CAMERA_OFFSET));                              
