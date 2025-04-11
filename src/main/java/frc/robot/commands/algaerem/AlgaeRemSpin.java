@@ -6,33 +6,34 @@ import frc.robot.constants.AlgaeRemConstants;
 import frc.robot.subsystems.AlgaeRemSubsystem;
 
 public class AlgaeRemSpin extends Command {
-    
-    private final AlgaeRemSubsystem algaeRem;
-    private final boolean useTimer;
-    
-    private Timer timeout;
 
-    public AlgaeRemSpin(AlgaeRemSubsystem algaeRemSub, boolean useTimerStop) {
-        algaeRem = algaeRemSub;
-        useTimer = useTimerStop;
+  private final AlgaeRemSubsystem algaeRem;
+  private final boolean useTimer;
 
-        addRequirements(algaeRem);
-    }
+  private Timer timeout;
 
-    @Override
-    public void initialize() {
-        timeout = new Timer();
-        timeout.start();
+  public AlgaeRemSpin(AlgaeRemSubsystem algaeRemSub, boolean useTimerStop) {
+    algaeRem = algaeRemSub;
+    useTimer = useTimerStop;
 
-        algaeRem.setFlywheelVBus(AlgaeRemConstants.spinVBus);
-    }
-    @Override
-    public void end(boolean interrupted) {
-        algaeRem.stop();
-    }
+    addRequirements(algaeRem);
+  }
 
-    @Override
-    public boolean isFinished() {
-        return useTimer ? timeout.hasElapsed(AlgaeRemConstants.spinTime) : false;
-    }
+  @Override
+  public void initialize() {
+    timeout = new Timer();
+    timeout.start();
+
+    algaeRem.setFlywheelVBus(AlgaeRemConstants.spinVBus);
+  }
+
+  @Override
+  public void end(boolean interrupted) {
+    algaeRem.stop();
+  }
+
+  @Override
+  public boolean isFinished() {
+    return useTimer ? timeout.hasElapsed(AlgaeRemConstants.spinTime) : false;
+  }
 }

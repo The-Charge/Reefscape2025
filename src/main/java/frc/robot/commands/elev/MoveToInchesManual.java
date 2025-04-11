@@ -6,20 +6,26 @@ import frc.robot.constants.ElevConstants;
 import frc.robot.subsystems.ElevSubsystem;
 
 public class MoveToInchesManual extends Command {
-    
-    private ElevSubsystem elev;
 
-    public MoveToInchesManual(ElevSubsystem elevSub) {
-        elev = elevSub;
-    }
+  private ElevSubsystem elev;
 
-    @Override
-    public void initialize() {
-        new MoveToInches(elev, SmartDashboard.getNumber(ElevConstants.overrideInName, ElevConstants.minPosTicks * ElevConstants.tickToInConversion), false).schedule();
-    }
+  public MoveToInchesManual(ElevSubsystem elevSub) {
+    elev = elevSub;
+  }
 
-    @Override
-    public boolean isFinished() {
-        return true;
-    }
+  @Override
+  public void initialize() {
+    new MoveToInches(
+            elev,
+            SmartDashboard.getNumber(
+                ElevConstants.overrideInName,
+                ElevConstants.minPosTicks * ElevConstants.tickToInConversion),
+            false)
+        .schedule();
+  }
+
+  @Override
+  public boolean isFinished() {
+    return true;
+  }
 }

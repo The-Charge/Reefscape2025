@@ -6,20 +6,25 @@ import frc.robot.constants.ClimbConstants;
 import frc.robot.subsystems.ClimbSubsystem;
 
 public class ClimbLeverDegreesManual extends Command {
-    
-    private ClimbSubsystem climb;
 
-    public ClimbLeverDegreesManual(ClimbSubsystem climbSub) {
-        climb = climbSub;
-    }
+  private ClimbSubsystem climb;
 
-    @Override
-    public void initialize() {
-        new ClimbLeverDegrees(climb, SmartDashboard.getNumber(ClimbConstants.leverOverrideDegName, ClimbConstants.leverRestingDegrees), false).schedule();
-    }
+  public ClimbLeverDegreesManual(ClimbSubsystem climbSub) {
+    climb = climbSub;
+  }
 
-    @Override
-    public boolean isFinished() {
-        return true;
-    }
+  @Override
+  public void initialize() {
+    new ClimbLeverDegrees(
+            climb,
+            SmartDashboard.getNumber(
+                ClimbConstants.leverOverrideDegName, ClimbConstants.leverRestingDegrees),
+            false)
+        .schedule();
+  }
+
+  @Override
+  public boolean isFinished() {
+    return true;
+  }
 }

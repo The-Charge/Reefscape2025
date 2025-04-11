@@ -19,32 +19,38 @@ public class VisionSubsystem extends SubsystemBase {
   public VisionSubsystem(String ll_name, Pose3d cameraOffset, boolean hasUSBCam) {
     this.ll_name = ll_name;
 
-    LimelightHelpers.setCameraPose_RobotSpace(ll_name, cameraOffset.getX(), cameraOffset.getY(), cameraOffset.getZ(),
-        Units.radiansToDegrees(cameraOffset.getRotation().getX()), Units.radiansToDegrees(cameraOffset.getRotation().getY()), Units.radiansToDegrees(cameraOffset.getRotation().getZ()));
-    
+    LimelightHelpers.setCameraPose_RobotSpace(
+        ll_name,
+        cameraOffset.getX(),
+        cameraOffset.getY(),
+        cameraOffset.getZ(),
+        Units.radiansToDegrees(cameraOffset.getRotation().getX()),
+        Units.radiansToDegrees(cameraOffset.getRotation().getY()),
+        Units.radiansToDegrees(cameraOffset.getRotation().getZ()));
+
     setPipeline(1);
-    if(hasUSBCam)
-      setPiP();
+    if (hasUSBCam) setPiP();
   }
 
   @Override
   public void periodic() {
-    if(getCurrentCommand() == null)
-        LoggingManager.logAndAutoSendValue(ll_name + " RunningCommand", "None");
+    if (getCurrentCommand() == null)
+      LoggingManager.logAndAutoSendValue(ll_name + " RunningCommand", "None");
     else
-        LoggingManager.logAndAutoSendValue(ll_name + " RunningCommand", getCurrentCommand().getName());
+      LoggingManager.logAndAutoSendValue(
+          ll_name + " RunningCommand", getCurrentCommand().getName());
   }
 
   public LimelightHelpers.PoseEstimate getLLHPoseEstimate(double yaw, double yawRate) {
     LimelightHelpers.SetRobotOrientation(ll_name, yaw, yawRate, 0, 0, 0, 0);
     return LimelightHelpers.getBotPoseEstimate_wpiBlue_MegaTag2(ll_name);
   }
-  
+
   public LimelightHelpers.PoseEstimate getLLHPoseEstimateTag1(double yaw, double yawRate) {
     LimelightHelpers.SetRobotOrientation(ll_name, yaw, yawRate, 0, 0, 0, 0);
     return LimelightHelpers.getBotPoseEstimate_wpiBlue(ll_name);
   }
-  
+
   public Pose2d getEstimatedPose(double yaw, double yawRate) {
     NetworkTable table = NetworkTableInstance.getDefault().getTable(ll_name);
 
@@ -55,7 +61,11 @@ public class VisionSubsystem extends SubsystemBase {
     if (botPoseArray.length == 0 || botPoseArray[7] == 0) {
       return null;
     }
-    Pose2d pose = new Pose2d(botPoseArray[0], botPoseArray[1], new Rotation2d(Units.degreesToRadians(botPoseArray[5])));
+    Pose2d pose =
+        new Pose2d(
+            botPoseArray[0],
+            botPoseArray[1],
+            new Rotation2d(Units.degreesToRadians(botPoseArray[5])));
 
     return pose;
   }
@@ -85,8 +95,11 @@ public class VisionSubsystem extends SubsystemBase {
   }
 
   public double getAmbiguity() {
-    Double[] array = NetworkTableInstance.getDefault().getTable(ll_name).getEntry("rawfiducials")
-        .getDoubleArray(new Double[] {});
+    Double[] array =
+        NetworkTableInstance.getDefault()
+            .getTable(ll_name)
+            .getEntry("rawfiducials")
+            .getDoubleArray(new Double[] {});
     if (array.length == 0) {
       return Double.NaN;
     }
@@ -135,8 +148,11 @@ public class VisionSubsystem extends SubsystemBase {
   }
 
   public Pose3d[] getTagPose3ds() {
-    Double[] table = NetworkTableInstance.getDefault().getTable(ll_name).getEntry("rawfiducials")
-        .getDoubleArray(new Double[] {});
+    Double[] table =
+        NetworkTableInstance.getDefault()
+            .getTable(ll_name)
+            .getEntry("rawfiducials")
+            .getDoubleArray(new Double[] {});
     if (table.length == 0) {
       return new Pose3d[] {};
     }
@@ -156,10 +172,15 @@ public class VisionSubsystem extends SubsystemBase {
   }
 
   public enum ReefPosition {
-    LEFT, MIDDLE, RIGHT
-  }  
+    LEFT,
+    MIDDLE,
+    RIGHT
+  }
 
   public void setPiP() {
-    NetworkTableInstance.getDefault().getTable(ll_name).getEntry("stream").setNumber(2); //usb camera as main and limelight as PiP
+    NetworkTableInstance.getDefault()
+        .getTable(ll_name)
+        .getEntry("stream")
+        .setNumber(2); // usb camera as main and limelight as PiP
   }
 }

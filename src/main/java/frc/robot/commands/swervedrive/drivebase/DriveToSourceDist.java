@@ -11,45 +11,61 @@ import frc.robot.subsystems.HeadSubsystem;
 import frc.robot.subsystems.SwerveSubsystem;
 
 public class DriveToSourceDist extends Command {
-    
-    private final SwerveSubsystem swerve;
-    private final HeadSubsystem head;
-    private Timer timeout;
-    private PIDController pid;
 
-    public DriveToSourceDist(SwerveSubsystem swerveSub, HeadSubsystem headSub) {
-        swerve = swerveSub;
-        head = headSub;
+  private final SwerveSubsystem swerve;
+  private final HeadSubsystem head;
+  private Timer timeout;
+  private PIDController pid;
 
-        addRequirements(swerve);
-    }
+  public DriveToSourceDist(SwerveSubsystem swerveSub, HeadSubsystem headSub) {
+    swerve = swerveSub;
+    head = headSub;
 
-    @Override
-    public void initialize() {
-        timeout = new Timer();
-        timeout.start();
+    addRequirements(swerve);
+  }
 
-        pid = new PIDController(SwerveConstants.alignPID.kP, SwerveConstants.alignPID.kI, SwerveConstants.alignPID.kD);
-        pid.setSetpoint(SwerveConstants.sourceAcceptableDist);
+  @Override
+  public void initialize() {
+    timeout = new Timer();
+    timeout.start();
 
-    }
-    @Override
-    public void execute() {
-        double out = pid.calculate(head.getBackDistance());
+    pid =
+        new PIDController(
+            SwerveConstants.alignPID.kP, SwerveConstants.alignPID.kI, SwerveConstants.alignPID.kD);
+    pid.setSetpoint(SwerveConstants.sourceAcceptableDist);
+  }
 
-                SmartDashboard.putNumber("Swerve AlignToSourceDist pid", out);
-        SmartDashboard.putNumber("Swerve AlignToSourceDist actual", MathUtil.clamp(out  * SwerveConstants.sourceAlignSpeed - 0.18, -SwerveConstants.sourceAlignSpeed, SwerveConstants.sourceAlignSpeed));
+  @Override
+  public void execute() {
+    double out = pid.calculate(head.getBackDistance());
 
-        swerve.drive(new Translation2d(MathUtil.clamp(out * SwerveConstants.sourceAlignSpeed - 0.18, -SwerveConstants.sourceAlignSpeed, SwerveConstants.sourceAlignSpeed), 0), 0, false);
-    }
-    @Override
-    public void end(boolean interrupted) {
-        swerve.drive(Translation2d.kZero, 0, false);
-    }
+    SmartDashboard.putNumber("Swerve AlignToSourceDist pid", out);
+    SmartDashboard.putNumber(
+        "Swerve AlignToSourceDist actual",
+        MathUtil.clamp(
+            out * SwerveConstants.sourceAlignSpeed - 0.18,
+            -SwerveConstants.sourceAlignSpeed,
+            SwerveConstants.sourceAlignSpeed));
 
-    @Override
-    public boolean isFinished() {
-        return head.getBackDistance() <= SwerveConstants.sourceAcceptableDist
-                || timeout.hasElapsed(SwerveConstants.alignTimeout);
-    }
+    swerve.drive(
+        new Translation2d(
+            MathUtil.clamp(
+                out * SwerveConstants.sourceAlignSpeed - 0.18,
+                -SwerveConstants.sourceAlignSpeed,
+                SwerveConstants.sourceAlignSpeed),
+            0),
+        0,
+        false);
+  }
+
+  @Override
+  public void end(boolean interrupted) {
+    swerve.drive(Translation2d.kZero, 0, false);
+  }
+
+  @Override
+  public boolean isFinished() {
+    return head.getBackDistance() <= SwerveConstants.sourceAcceptableDist
+        || timeout.hasElapsed(SwerveConstants.alignTimeout);
+  }
 }

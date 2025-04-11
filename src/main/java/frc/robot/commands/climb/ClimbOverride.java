@@ -6,33 +6,32 @@ import frc.robot.constants.ClimbConstants;
 import frc.robot.subsystems.ClimbSubsystem;
 
 public class ClimbOverride extends Command {
-    
-    private ClimbSubsystem climb;
-    private Timer timeout;
 
-    /**
-     * ALWAYS HAVE A HAND ON DISABLE WHEN USING. IT WILL BREAK THE CLIMBER
-     */
-    public ClimbOverride(ClimbSubsystem climbSub) {
-        climb = climbSub;
+  private ClimbSubsystem climb;
+  private Timer timeout;
 
-        addRequirements(climb);
-    }
+  /** ALWAYS HAVE A HAND ON DISABLE WHEN USING. IT WILL BREAK THE CLIMBER */
+  public ClimbOverride(ClimbSubsystem climbSub) {
+    climb = climbSub;
 
-    @Override
-    public void initialize() {
-        timeout = new Timer();
-        timeout.start();
+    addRequirements(climb);
+  }
 
-        climb.leverVBus(ClimbConstants.leverMaxVBus);
-    }
-    @Override
-    public void end(boolean interrupted) {
-        climb.leverStop();
-    }
+  @Override
+  public void initialize() {
+    timeout = new Timer();
+    timeout.start();
 
-    @Override
-    public boolean isFinished() {
-        return timeout.hasElapsed(0.5);
-    }
+    climb.leverVBus(ClimbConstants.leverMaxVBus);
+  }
+
+  @Override
+  public void end(boolean interrupted) {
+    climb.leverStop();
+  }
+
+  @Override
+  public boolean isFinished() {
+    return timeout.hasElapsed(0.5);
+  }
 }

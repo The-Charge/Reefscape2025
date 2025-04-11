@@ -1,10 +1,7 @@
 package frc.robot.commands.vision;
 
-import java.util.function.BooleanSupplier;
-
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.path.PathConstraints;
-
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -14,6 +11,7 @@ import frc.robot.constants.TelemetryConstants;
 import frc.robot.constants.VisionConstants.ApriltagConstants;
 import frc.robot.subsystems.SwerveSubsystem;
 import frc.robot.subsystems.VisionSubsystem.ReefPosition;
+import java.util.function.BooleanSupplier;
 
 public class DriveToTag extends Command {
   private final SwerveSubsystem swerve;
@@ -24,26 +22,28 @@ public class DriveToTag extends Command {
   private ReefPosition reefPos;
   private Command drivetoPose;
 
-  public DriveToTag(SwerveSubsystem swerve, boolean reef, BooleanSupplier cancel, ReefPosition reefPos) {
+  public DriveToTag(
+      SwerveSubsystem swerve, boolean reef, BooleanSupplier cancel, ReefPosition reefPos) {
     this.swerve = swerve;
     this.reefPos = reefPos;
     this.cancel = cancel;
     this.reef = reef;
     this.tagged = false;
-    
+
     addRequirements(swerve);
   }
-  
-  public DriveToTag(SwerveSubsystem swerve, int tagid, BooleanSupplier cancel, ReefPosition reefPos) {
+
+  public DriveToTag(
+      SwerveSubsystem swerve, int tagid, BooleanSupplier cancel, ReefPosition reefPos) {
     this.swerve = swerve;
     this.reefPos = reefPos;
     this.cancel = cancel;
     this.tagid = tagid;
     this.tagged = true;
-    
+
     addRequirements(swerve);
   }
-  
+
   @Override
   public void initialize() {
     drivetoPose = null;
@@ -62,11 +62,11 @@ public class DriveToTag extends Command {
         offset = ApriltagConstants.LEFT_ALIGN_OFFSET;
         SmartDashboard.putString("side", "LEFT");
         break;
-        case RIGHT:
+      case RIGHT:
         offset = ApriltagConstants.RIGHT_ALIGN_OFFSET;
         SmartDashboard.putString("side", "Rigth");
         break;
-        default:
+      default:
         offset = ApriltagConstants.MID_ALIGN_OFFSET;
         SmartDashboard.putString("side", "center");
         break;
@@ -88,7 +88,8 @@ public class DriveToTag extends Command {
 
     Pose2d targetPose = new Pose2d(x, y, rot2d);
 
-    PathConstraints constraints = new PathConstraints(SwerveConstants.MAX_SPEED / 2, 1.0, 2 * Math.PI, 4 * Math.PI);
+    PathConstraints constraints =
+        new PathConstraints(SwerveConstants.MAX_SPEED / 2, 1.0, 2 * Math.PI, 4 * Math.PI);
 
     if (TelemetryConstants.debugTelemetry) {
       SmartDashboard.putNumber("tag x", x);
@@ -104,15 +105,14 @@ public class DriveToTag extends Command {
     // drivetoPose = null;
 
     // run the path
-    drivetoPose = AutoBuilder.pathfindToPose(
-        targetPose,
-        constraints,
-        0.0 // Goal end velocity in meters/sec
-    );
+    drivetoPose =
+        AutoBuilder.pathfindToPose(
+            targetPose, constraints, 0.0 // Goal end velocity in meters/sec
+            );
 
     drivetoPose.onlyWhile(cancel).schedule();
   }
-  
+
   @Override
   public boolean isFinished() {
     if (drivetoPose != null) {

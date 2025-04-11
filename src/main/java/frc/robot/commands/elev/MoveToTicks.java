@@ -5,31 +5,31 @@ import frc.robot.subsystems.ElevSubsystem;
 
 public class MoveToTicks extends Command {
 
-    private ElevSubsystem elev;
-    private double targetTicks;
-    private boolean wait;
+  private ElevSubsystem elev;
+  private double targetTicks;
+  private boolean wait;
 
-    public MoveToTicks(ElevSubsystem elevSub, double ticks) {
-        this(elevSub, ticks, false);
-    }
-    public MoveToTicks(ElevSubsystem elevSub, double ticks, boolean waitForTarget) {
-        elev = elevSub;
-        targetTicks = ticks;
-        wait = waitForTarget;
+  public MoveToTicks(ElevSubsystem elevSub, double ticks) {
+    this(elevSub, ticks, false);
+  }
 
-        addRequirements(elev);
-    }
+  public MoveToTicks(ElevSubsystem elevSub, double ticks, boolean waitForTarget) {
+    elev = elevSub;
+    targetTicks = ticks;
+    wait = waitForTarget;
 
-    @Override
-    public void initialize() {
-        elev.setTargetPositionTicks(targetTicks);
-    }
+    addRequirements(elev);
+  }
 
-    @Override
-    public boolean isFinished() {
-        if(!wait)
-            return true;
-        
-        return elev.isAtTarget();
-    }
+  @Override
+  public void initialize() {
+    elev.setTargetPositionTicks(targetTicks);
+  }
+
+  @Override
+  public boolean isFinished() {
+    if (!wait) return true;
+
+    return elev.isAtTarget();
+  }
 }

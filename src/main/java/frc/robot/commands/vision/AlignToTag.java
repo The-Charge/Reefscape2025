@@ -13,10 +13,12 @@ public class AlignToTag extends Command {
   private final SwerveSubsystem swerve;
   private VisionSubsystem limelight;
   private ReefPosition reefPos;
-  private PIDController sideController = new PIDController(5, 0, 0), frontController = new PIDController(5, 0,
-      0), rotController = new PIDController(5, 0, 0);
+  private PIDController sideController = new PIDController(5, 0, 0),
+      frontController = new PIDController(5, 0, 0),
+      rotController = new PIDController(5, 0, 0);
 
-  public AlignToTag(SwerveSubsystem swerve, VisionSubsystem limelight, VisionSubsystem.ReefPosition pos) {
+  public AlignToTag(
+      SwerveSubsystem swerve, VisionSubsystem limelight, VisionSubsystem.ReefPosition pos) {
     this.swerve = swerve;
     this.limelight = limelight;
     this.reefPos = pos;
@@ -47,7 +49,7 @@ public class AlignToTag extends Command {
     double pidty = frontController.calculate(tx, 1);
     double pidrot = rotController.calculate(-rot, 0);
 
-    SmartDashboard.putNumberArray("Align array", new Double[] { ty, tx, rot, pidtx, pidty, pidrot });
+    SmartDashboard.putNumberArray("Align array", new Double[] {ty, tx, rot, pidtx, pidty, pidrot});
 
     // ChassisSpeeds alignmentSpeeds = swerve.getTargetSpeeds(pidtx, pidty, new
     // Rotation2d(pidrot));

@@ -6,20 +6,25 @@ import frc.robot.constants.ClimbConstants;
 import frc.robot.subsystems.ClimbSubsystem;
 
 public class ClimbClampDegreesManual extends Command {
-    
-    private ClimbSubsystem climb;
 
-    public ClimbClampDegreesManual(ClimbSubsystem climbSub) {
-        climb = climbSub;
-    }
+  private ClimbSubsystem climb;
 
-    @Override
-    public void initialize() {
-        new ClimbClampDegrees(climb, SmartDashboard.getNumber(ClimbConstants.clampOverrideDegName, ClimbConstants.clampRestingDegrees), false).schedule();
-    }
+  public ClimbClampDegreesManual(ClimbSubsystem climbSub) {
+    climb = climbSub;
+  }
 
-    @Override
-    public boolean isFinished() {
-        return true;
-    }
+  @Override
+  public void initialize() {
+    new ClimbClampDegrees(
+            climb,
+            SmartDashboard.getNumber(
+                ClimbConstants.clampOverrideDegName, ClimbConstants.clampRestingDegrees),
+            false)
+        .schedule();
+  }
+
+  @Override
+  public boolean isFinished() {
+    return true;
+  }
 }

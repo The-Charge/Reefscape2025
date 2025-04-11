@@ -5,31 +5,31 @@ import frc.robot.subsystems.ClimbSubsystem;
 
 public class ClimbClampDegrees extends Command {
 
-    private ClimbSubsystem climb;
-    private double targetDegrees;
-    private boolean wait;
+  private ClimbSubsystem climb;
+  private double targetDegrees;
+  private boolean wait;
 
-    public ClimbClampDegrees(ClimbSubsystem climbSub, double degrees) {
-        this(climbSub, degrees, false);
-    }
-    public ClimbClampDegrees(ClimbSubsystem climbSub, double degrees, boolean waitForTarget) {
-        climb = climbSub;
-        targetDegrees = degrees;
-        wait = waitForTarget;
+  public ClimbClampDegrees(ClimbSubsystem climbSub, double degrees) {
+    this(climbSub, degrees, false);
+  }
 
-        addRequirements(climb);
-    }
+  public ClimbClampDegrees(ClimbSubsystem climbSub, double degrees, boolean waitForTarget) {
+    climb = climbSub;
+    targetDegrees = degrees;
+    wait = waitForTarget;
 
-    @Override
-    public void initialize() {
-        climb.setClampDegrees(targetDegrees);
-    }
+    addRequirements(climb);
+  }
 
-    @Override
-    public boolean isFinished() {
-        if(!wait)
-            return true;
-        
-        return climb.isClampIsAtTarget();
-    }
+  @Override
+  public void initialize() {
+    climb.setClampDegrees(targetDegrees);
+  }
+
+  @Override
+  public boolean isFinished() {
+    if (!wait) return true;
+
+    return climb.isClampIsAtTarget();
+  }
 }

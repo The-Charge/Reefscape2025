@@ -5,42 +5,45 @@ import frc.robot.constants.ClimbConstants;
 import frc.robot.subsystems.ClimbSubsystem;
 
 public class Climb extends Command {
-    
-    private ClimbSubsystem climb;
-    private boolean startedLever;
-    private double leverVbus;
 
-    public Climb(ClimbSubsystem climbSub) {
-        this(climbSub, ClimbConstants.leverMaxVBus);
-    }
-    public Climb(ClimbSubsystem climbSub, double vbus) {
-        climb = climbSub;
-        leverVbus = vbus;
+  private ClimbSubsystem climb;
+  private boolean startedLever;
+  private double leverVbus;
 
-        addRequirements(climb);
-    }
+  public Climb(ClimbSubsystem climbSub) {
+    this(climbSub, ClimbConstants.leverMaxVBus);
+  }
 
-    @Override
-    public void initialize() {
-        startedLever = false;
+  public Climb(ClimbSubsystem climbSub, double vbus) {
+    climb = climbSub;
+    leverVbus = vbus;
 
-        climb.setClampState(ClimbSubsystem.State.ACTIVE);
-    }
-    @Override
-    public void execute() {
-        if(climb.isClampIsAtTarget() && !startedLever) {
-            climb.leverVBus(leverVbus); //relies on soft limits to stop from going too far
-            startedLever = true;
-        }
-    }
-    @Override
-    public void end(boolean interrupted) {
-        climb.leverStop();
-    }
+    addRequirements(climb);
+  }
 
-    @Override
-    public boolean isFinished() {
-        return climb.getLeverLimitSwitch();
-        // return climb.getLeverDegrees() >= ClimbConstants.leverActiveDegrees;
+  @Override
+  public void initialize() {
+    startedLever = false;
+
+    climb.setClampState(ClimbSubsystem.State.ACTIVE);
+  }
+
+  @Override
+  public void execute() {
+    if (climb.isClampIsAtTarget() && !startedLever) {
+      climb.leverVBus(leverVbus); // relies on soft limits to stop from going too far
+      startedLever = true;
     }
+  }
+
+  @Override
+  public void end(boolean interrupted) {
+    climb.leverStop();
+  }
+
+  @Override
+  public boolean isFinished() {
+    return climb.getLeverLimitSwitch();
+    // return climb.getLeverDegrees() >= ClimbConstants.leverActiveDegrees;
+  }
 }

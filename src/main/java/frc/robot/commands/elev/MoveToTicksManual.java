@@ -6,20 +6,24 @@ import frc.robot.constants.ElevConstants;
 import frc.robot.subsystems.ElevSubsystem;
 
 public class MoveToTicksManual extends Command {
-    
-    private ElevSubsystem elev;
 
-    public MoveToTicksManual(ElevSubsystem elevSub) {
-        elev = elevSub;
-    }
+  private ElevSubsystem elev;
 
-    @Override
-    public void initialize() {
-        new MoveToTicks(elev, SmartDashboard.getNumber(ElevConstants.overrideTicksName, ElevConstants.minPosTicks), false).schedule();
-    }
+  public MoveToTicksManual(ElevSubsystem elevSub) {
+    elev = elevSub;
+  }
 
-    @Override
-    public boolean isFinished() {
-        return true;
-    }
+  @Override
+  public void initialize() {
+    new MoveToTicks(
+            elev,
+            SmartDashboard.getNumber(ElevConstants.overrideTicksName, ElevConstants.minPosTicks),
+            false)
+        .schedule();
+  }
+
+  @Override
+  public boolean isFinished() {
+    return true;
+  }
 }

@@ -5,26 +5,27 @@ import frc.robot.constants.IntakeConstants;
 import frc.robot.subsystems.IntakeSubsystem;
 
 public class ManualIntake extends Command {
-    
-    private final IntakeSubsystem intake;
 
-    public ManualIntake(IntakeSubsystem intakeSub) {
-        intake = intakeSub;
+  private final IntakeSubsystem intake;
 
-        addRequirements(intake);
-    }
+  public ManualIntake(IntakeSubsystem intakeSub) {
+    intake = intakeSub;
 
-    @Override
-    public void initialize() {
-        intake.vBus(IntakeConstants.intakeVBus);
-    }
-    @Override
-    public void end(boolean interrupted) {
-        intake.stop();
-    }
+    addRequirements(intake);
+  }
 
-    @Override
-    public boolean isFinished() {
-        return false;
-    }
+  @Override
+  public void initialize() {
+    intake.vBus(IntakeConstants.intakeVBus);
+  }
+
+  @Override
+  public void end(boolean interrupted) {
+    intake.stop();
+  }
+
+  @Override
+  public boolean isFinished() {
+    return false;
+  }
 }
