@@ -1,14 +1,18 @@
 package frc.robot.commands.climb;
 
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.constants.ClimbConstants;
 import frc.robot.subsystems.ClimbSubsystem;
 
 public class Climb extends Command {
     
+    private static final double startTime = 30;
+
     private ClimbSubsystem climb;
     private boolean startedLever;
     private double leverVbus;
+    private double timeLeft;
 
     public Climb(ClimbSubsystem climbSub) {
         this(climbSub, ClimbConstants.leverMaxVBus);
@@ -22,12 +26,17 @@ public class Climb extends Command {
 
     @Override
     public void initialize() {
+        timeLeft = DriverStation.getMatchTime();
+        if(timeLeft > startTime) return;
+
         startedLever = false;
 
         climb.setClampState(ClimbSubsystem.State.ACTIVE);
     }
     @Override
     public void execute() {
+        if(timeLeft > startTime) return;
+
         if(climb.isClampIsAtTarget() && !startedLever) {
             climb.leverVBus(leverVbus); //relies on soft limits to stop from going too far
             startedLever = true;
@@ -40,7 +49,7 @@ public class Climb extends Command {
 
     @Override
     public boolean isFinished() {
-        return climb.getLeverLimitSwitch();
+        return timeLeft > startTime || climb.getLeverLimitSwitch();
         // return climb.getLeverDegrees() >= ClimbConstants.leverActiveDegrees;
     }
 }
