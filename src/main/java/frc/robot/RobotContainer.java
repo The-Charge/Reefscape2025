@@ -156,11 +156,11 @@ public class RobotContainer {
         // driver1.leftBumper().whileTrue(new AlignToBranch(swerve, head, elev, false));
         driver1.rightBumper().whileTrue(new DriveSlow(swerve, true));
         driver1.leftBumper().whileTrue(new DriveSlow(swerve, false));
-        driver1.y().onTrue(new DriveToTag(swerve, false,
-                () -> (Math.abs(driver1.getLeftX()) < SwerveConstants.LEFT_X_DEADBAND
-                        && Math.abs(driver1.getLeftY()) < SwerveConstants.LEFT_Y_DEADBAND
-                        && Math.abs(driver1.getRightX()) < SwerveConstants.RIGHT_X_DEADBAND),
-                ReefPosition.MIDDLE));
+        // driver1.y().onTrue(new DriveToTag(swerve, false,
+        //         () -> (Math.abs(driver1.getLeftX()) < SwerveConstants.LEFT_X_DEADBAND
+        //                 && Math.abs(driver1.getLeftY()) < SwerveConstants.LEFT_Y_DEADBAND
+        //                 && Math.abs(driver1.getRightX()) < SwerveConstants.RIGHT_X_DEADBAND),
+        //         ReefPosition.MIDDLE));
         
         // driver1.a().whileTrue(new DriveToAlgae(swerve, reeflimelight));
         
