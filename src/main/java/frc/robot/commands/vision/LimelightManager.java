@@ -92,10 +92,10 @@ public class LimelightManager extends Command {
             LoggingManager.logAndAutoSendValue("Tag1 rotation", true);
         }
         
-        if ((funnelAmbig < 0.2 || funnelCount > 1) && yawRate < Units.degreesToRadians(36) && speed < 0.5) {
-            swerve.addVisionReading(funnelEstimateTag1.pose, funnelEstimateTag1.timestampSeconds, VecBuilder.fill(9999999,9999999,2));
-            LoggingManager.logAndAutoSendValue("Tag1 rotation", true);
-        }
+        // if ((funnelAmbig < 0.2 || funnelCount > 1) && yawRate < Units.degreesToRadians(36) && speed < 0.5) {
+        //     swerve.addVisionReading(funnelEstimateTag1.pose, funnelEstimateTag1.timestampSeconds, VecBuilder.fill(9999999,9999999,2));
+        //     LoggingManager.logAndAutoSendValue("Tag1 rotation", true);
+        // }
 
         if (reefEstim && funnelEstim) {
             if (reefCount > funnelCount) {
@@ -107,7 +107,7 @@ public class LimelightManager extends Command {
                 if(TelemetryConstants.debugTelemetry)
                     SmartDashboard.putBoolean("funnel estimated", true);
 
-                swerve.addVisionReading(funnelEstimate.pose, funnelEstimate.timestampSeconds, VecBuilder.fill(.7,.7,9999999));
+                // swerve.addVisionReading(funnelEstimate.pose, funnelEstimate.timestampSeconds, VecBuilder.fill(.7,.7,9999999));
             } else if (reefAmbig < funnelAmbig) {
                 if(TelemetryConstants.debugTelemetry)
                     SmartDashboard.putBoolean("reef estimated", true);
@@ -117,7 +117,7 @@ public class LimelightManager extends Command {
                 if(TelemetryConstants.debugTelemetry)
                     SmartDashboard.putBoolean("funnel estimated", true);
 
-                swerve.addVisionReading(funnelEstimate.pose, funnelEstimate.timestampSeconds, VecBuilder.fill(.7,.7,9999999));
+                // swerve.addVisionReading(funnelEstimate.pose, funnelEstimate.timestampSeconds, VecBuilder.fill(.7,.7,9999999));
             }
         } else if (reefEstim) {
             if(TelemetryConstants.debugTelemetry)
@@ -128,7 +128,7 @@ public class LimelightManager extends Command {
             if(TelemetryConstants.debugTelemetry)
                 SmartDashboard.putBoolean("funnel estimated", true);
                 
-            swerve.addVisionReading(funnelEstimate.pose, funnelEstimate.timestampSeconds, VecBuilder.fill(.7,.7,9999999));
+            // swerve.addVisionReading(funnelEstimate.pose, funnelEstimate.timestampSeconds, VecBuilder.fill(.7,.7,9999999));
         }
 
         // Rotation2d swerveRot = swerve.getHeading();

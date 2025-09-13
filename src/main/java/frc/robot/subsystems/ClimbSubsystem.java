@@ -65,6 +65,10 @@ public class ClimbSubsystem extends SubsystemBase {
         LoggingManager.logAndAutoSendValue("Climb Lever Ang (Deg)", getLeverDegrees());
         LoggingManager.logAndAutoSendValue("Climb Lever VBus", lever.get());
         LoggingManager.logAndAutoSendValue("Climb Lever Current", lever.getStatorCurrent().getValueAsDouble());
+        LoggingManager.logAndAutoSendValue("Climb Clamp Ang (Ticks)", getClampTicks());
+        LoggingManager.logAndAutoSendValue("Climb Clamp Ang (Deg)", getClampDegrees());
+        LoggingManager.logAndAutoSendValue("Climb Clamp VBus", clamp.get());
+        LoggingManager.logAndAutoSendValue("Climb Clamp Current", clamp.getStatorCurrent().getValueAsDouble());
         LoggingManager.logValue("LeverPose", Pose3d.struct, new Pose3d(Translation3d.kZero, new Rotation3d(0, getLeverDegrees() * Math.PI / 180, 0)), true);
         LoggingManager.logValue("ClampPose", Pose3d.struct, new Pose3d(Translation3d.kZero, new Rotation3d(0, 0, -getClampDegrees() * Math.PI / 180)), true);
 

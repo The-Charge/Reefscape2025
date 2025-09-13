@@ -140,7 +140,7 @@ public class Robot extends TimedRobot {
             m_autonomousCommand.schedule();
         }
 
-        // m_robotContainer.scheduleLimelightAuton(); //use auton mode that cuts off after a certain amount of time
+        m_robotContainer.scheduleLimelightAuton(); //use auton mode that cuts off after a certain amount of time
 
         m_robotContainer.displayAuto();
         m_robotContainer.getHeadSubsystem().recheckHasCoral();
@@ -165,7 +165,7 @@ public class Robot extends TimedRobot {
         else {
             CommandScheduler.getInstance().cancelAll();
         }
-        m_robotContainer.scheduleLimelight();
+        // m_robotContainer.scheduleLimelight();
         
         m_robotContainer.setTeleopDefaultCommand();
         m_robotContainer.setMotorBrake(true);
