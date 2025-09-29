@@ -151,6 +151,11 @@ public class VisionSubsystem extends SubsystemBase {
     return poses;
   }
 
+  public Double[] getSTDDevs() {
+    Double[] table = NetworkTableInstance.getDefault().getTable(ll_name).getEntry("stddevs").getDoubleArray(new Double[] {});
+    return table;
+  }
+
   public String getName() {
     return ll_name;
   }
