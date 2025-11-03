@@ -6,7 +6,7 @@ import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import frc.robot.LimelightHelpers;
+import frc.robot.LimelightHelpers.PoseEstimate;
 import frc.robot.commands.LoggingManager;
 import frc.robot.constants.TelemetryConstants;
 import frc.robot.subsystems.SwerveSubsystem;
@@ -33,10 +33,10 @@ public class LimelightManager extends Command {
         double yaw = swerve.getHeading().getDegrees();
         double yawRate = Math.abs(swerve.getSwerveDrive().getGyro().getYawAngularVelocity().in(DegreesPerSecond));
         
-        LimelightHelpers.PoseEstimate reefEstimate = reefLimelight.getLLHPoseEstimate(yaw, 0);
-        LimelightHelpers.PoseEstimate funnelEstimate = funnelLimelight.getLLHPoseEstimate(yaw, 0);
-        LimelightHelpers.PoseEstimate reefEstimateTag1 = reefLimelight.getLLHPoseEstimateTag1(yaw, 0);
-        LimelightHelpers.PoseEstimate funnelEstimateTag1 = funnelLimelight.getLLHPoseEstimateTag1(yaw, 0);
+        PoseEstimate reefEstimate = reefLimelight.getLLHPoseEstimate(yaw, 0);
+        PoseEstimate funnelEstimate = funnelLimelight.getLLHPoseEstimate(yaw, 0);
+        PoseEstimate reefEstimateTag1 = reefLimelight.getLLHPoseEstimateTag1(yaw, 0);
+        PoseEstimate funnelEstimateTag1 = funnelLimelight.getLLHPoseEstimateTag1(yaw, 0);
         Double[] reefstddev = reefLimelight.getSTDDevs();
         Double[] funnelstddev = funnelLimelight.getSTDDevs();
 
@@ -68,15 +68,16 @@ public class LimelightManager extends Command {
             SmartDashboard.putNumber("swerve rot speed", yawRate);
         }
 
+        final int big = Integer.MAX_VALUE;
 
         LoggingManager.logAndAutoSendValue("Tag1 rotation", false);
         if (reefstddev[5] < funnelstddev[5]) {
             swerve.addVisionReading(reefEstimateTag1.pose, reefEstimateTag1.timestampSeconds,
-                    VecBuilder.fill(9999999, 9999999, reefstddev[5]));
+                    VecBuilder.fill(big, big, reefstddev[5]));
             LoggingManager.logAndAutoSendValue("Tag1 rotation", true);
         } else {
             swerve.addVisionReading(funnelEstimateTag1.pose, funnelEstimateTag1.timestampSeconds,
-                    VecBuilder.fill(9999999, 9999999, funnelstddev[5]));
+                    VecBuilder.fill(big, big, funnelstddev[5]));
             LoggingManager.logAndAutoSendValue("Tag1 rotation", true);
         }
 
@@ -85,13 +86,13 @@ public class LimelightManager extends Command {
                 SmartDashboard.putBoolean("reef estimated", true);
 
             swerve.addVisionReading(reefEstimate.pose, reefEstimate.timestampSeconds, VecBuilder.fill(
-                    reefstddev[6], reefstddev[7], 9999999));
+                    reefstddev[6], reefstddev[7], big));
         } else {
             if (TelemetryConstants.debugTelemetry)
                 SmartDashboard.putBoolean("funnel estimated", true);
 
             swerve.addVisionReading(funnelEstimate.pose, funnelEstimate.timestampSeconds,
-                    VecBuilder.fill(funnelstddev[6], funnelstddev[7], 9999999));
+                    VecBuilder.fill(funnelstddev[6], funnelstddev[7], big));
         }
     }
 
